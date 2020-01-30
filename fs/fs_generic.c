@@ -71,6 +71,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #ifdef MONITOR
 	monitor_init(&global_monitor);
 #endif
+  superblock super;
 	spb.fp = open("a", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
 	printf("hello %d \n", spb.fp);
   spb.root_directory = ROOT_DIR;
@@ -83,7 +84,8 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
   spb.cur_bit = NULL;
 
   write(spb.fp, (char *)&spb, PAGESIZE);
-  printf("hello %d \n", spb.fp);
+  pread(spb.fp, (char *)&super, PAGESIZE, 0);
+  printf("hello %d \n", super);
 	fs_mkdir("/", 0755);
 
 	return NULL;
