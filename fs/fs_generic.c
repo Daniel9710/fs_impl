@@ -1,3 +1,5 @@
+#define _LARGEFILE64_SOURCE
+
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -14,6 +16,7 @@
 
 struct monitor *global_monitor;
 struct superblock spb;
+
 
 int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
 
@@ -32,12 +35,12 @@ int fs_chmod (const char *path, mode_t mode, struct fuse_file_info *fi) {
 }
 
 int fs_chown (const char *path, uid_t uid, gid_t gid, struct fuse_file_info *fi) {
-    
+
     return 0;
 }
 
 int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
-    
+
     return 0;
 }
 
