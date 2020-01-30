@@ -3,7 +3,6 @@
 
 #define FUSE_USE_VERSION 31
 #include "global_types.h"
-
 #ifdef MONITOR
 #include "monitor.h"
 //extern struct monitor *global_monitor;
@@ -26,7 +25,6 @@
 
 
 struct superblock {
-
 	FILE *fp;
 	uint32_t root_directory;
 	uint32_t total_block_size;

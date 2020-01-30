@@ -68,7 +68,8 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #ifdef MONITOR
 	monitor_init(&global_monitor);
 #endif
-
+	spb.fp = open("a", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
+	printf("%d \n", spb.fp);
 	fs_mkdir("/", 0755);
 
 	return NULL;
