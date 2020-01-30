@@ -1,5 +1,5 @@
-CC		= g++
-LD		= g++
+CC		= gcc
+LD		= gcc
 
 INCDIR	= -I../util/queue \
 	  -I../util/monitor \
