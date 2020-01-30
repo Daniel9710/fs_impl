@@ -59,7 +59,5 @@ struct free_list {
 	uint32_t next;
 };
 
-void bitmap_init();
-void free_list_init();
 
 #endif

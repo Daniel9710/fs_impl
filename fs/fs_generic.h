@@ -16,4 +16,6 @@ int fs_readlink (const char *, char *, size_t);
 void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg);
 void fs_destroy (void *private_data); 
 
+void bitmap_init();
+void free_list_init();
 #endif

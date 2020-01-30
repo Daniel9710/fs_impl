@@ -7,6 +7,7 @@
 #include "fs_dir.h"
 #include "metadata.h"
 
+extern struct superblock spb;
 
 int fs_opendir (const char *path, struct fuse_file_info *fi) {
 	fi->keep_cache = 1;

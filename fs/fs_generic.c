@@ -13,6 +13,7 @@
 #include "fs_file.h"
 
 struct monitor *global_monitor;
+struct superblock spb;
 
 int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
 
@@ -81,3 +82,19 @@ void fs_destroy (void *private_data) {
 
 	return;
 }
+
+void bitmap_init() {
+	struct d_bitmap *bit = (struct d_bitmap *)calloc(1, sizeof(struct d_bitmap));
+	int i;
+	lseek(spb.fp, D_BITMAP_INIT_BN * PAGESIZE, SEEK_SET);
+
+	for (i = D_BITMAP_INIT_BN; i < INODE_INIT_BN; i++)
+		write(spb.fp, (char *)bit, PAGESIZE);
+
+	spb.cur_bit = bit;
+}
+/*
+void free_list_init() {
+	spb.list_first =
+}
+*/

@@ -10,7 +10,7 @@
 #include "fs_main.h"
 
 extern struct monitor *global_monitor;
-
+extern struct superblock spb;
 
 int fs_open (const char *path, struct fuse_file_info *fi) {
 	fi->keep_cache = 1;

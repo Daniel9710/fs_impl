@@ -31,7 +31,6 @@
 #include "fs_dir.h"
 #include "fs_file.h"
 #include "fs_generic.h"
-#include "fs_main.h"
 
 /*
  * Command line options
@@ -100,23 +99,7 @@ static void show_help(const char *progname)
 	       "                        (default \"koofs, World!\\n\")\n"
 	       "\n");
 }
-superblock spb;
 
-void bitmap_init() {
-	struct d_bitmap *bit = (struct d_bitmap *)calloc(1, sizeof(struct d_bitmap));
-	int i;
-	lseek(spb.fp, D_BITMAP_INIT_BN * PAGESIZE, SEEK_SET);
-
-	for (i = D_BITMAP_INIT_BN; i < INODE_INIT_BN; i++)
-		write(spb.fp, (char *)bit, PAGESIZE);
-
-	spb.cur_bit = bit;
-}
-/*
-void free_list_init() {
-	spb.list_first =
-}
-*/
 int main(int argc, char *argv[])
 {
 	int ret;
