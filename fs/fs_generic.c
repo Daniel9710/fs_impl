@@ -73,10 +73,11 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #endif
 
   super_init();
-  for(int i = 0; i < 256; i++)
+  for(int i = 0; i < 256; i++){
     for(int j = 0; j < 4; j++)
       printf("%d", *(int *)&spb.cur_bit->bitset[i * 16 + j * 4]);
     printf("\n");
+  }
 
   pread(spb.fp, (char *)spb.cur_bit, PAGESIZE, (D_BITMAP_INIT_BN + 3) * PAGESIZE);
 
