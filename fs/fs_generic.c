@@ -73,14 +73,12 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #endif
 
   super_init();
-  for(int i = 0; i < 1024; i++)
-    printf("%d \n", *(int *)&spb.cur_bit->bitset[i * 4]);
+  for(int i = 0; i < 256; i++)
+    for(int j = 0; j < 4; j++)
+      printf("%d \n", *(int *)&spb.cur_bit->bitset[i * 16 + j * 4]);
 
   pread(spb.fp, (char *)spb.cur_bit, PAGESIZE, (D_BITMAP_INIT_BN + 3) * PAGESIZE);
-  printf("------------------\n");
 
-  for(int i = 0; i < 1024; i++)
-    printf("%d \n", *(int *)&spb.cur_bit->bitset[i * 4]);
 
 	fs_mkdir("/", 0755);
 
