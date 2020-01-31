@@ -23,14 +23,17 @@ int fs_mkdir (const char *path, mode_t mode) {
 	inode node;
 	parent = child = spb.root_directory;
 	strcpy(ppath, path);
+	printf("start\n");
 	ptr = strtok(ppath, "/");
 	while (ptr != NULL){
 		printf("%s\n", ptr);
 	  ptr = strtok(NULL, "/");
 	}
+	printf("finish\n");
+	/*
 	if(parent == child) {
 
-	}
+	}*/
 	return 0;
 }
 

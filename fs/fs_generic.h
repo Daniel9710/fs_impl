@@ -26,9 +26,9 @@ void bitmap_write(d_bitmap *bitmap, uint32_t block_num);
 void bitmap_update(uint32_t data_block_num, uint8_t type);
 void data_read(void *data, uint32_t block_num);
 void data_write(void *data, uint32_t block_num);
-void inode_read(inode *node, int32_t inode_block_num)
+void inode_read(inode *node, int32_t inode_block_num);
 void inode_write(inode *node, uint32_t inode_block_num);
-
+int search_bitmap(int *arr, int num);
 
 
 #endif

@@ -18,6 +18,8 @@
 #define D_BITMAP_INIT_BN 1
 #define INODE_INIT_BN 76
 #define DATA_INIT_BN (INODE_INIT_BN + 100 * K)
+#define D_BITMAP_NUM INODE_INIT_BN - D_BITMAP_INIT_BN
+#define INODE_BLOCK_NUM DATA_INIT_BN - INODE_INIT_BN
 #define DIRECT_PTR 40
 #define INDIRECT_PTR 6
 #define D_INDIRECT_PTR 2
@@ -36,9 +38,10 @@ typedef struct superblock {
 	uint32_t list_first;
 	uint32_t free_inode;
 	uint32_t free_d_block;
+	uint32_t total_d_blocks;
 	uint32_t cur_bit_bn;
 	struct d_bitmap *cur_bit;
-	char reserve[PAGESIZE - 40];
+	char reserve[PAGESIZE - 44];
 }superblock;
 
 typedef struct inode {

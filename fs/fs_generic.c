@@ -14,6 +14,12 @@
 #include "fs_dir.h"
 #include "fs_file.h"
 
+#define BITCHECK(block, idx) block & (1 << idx)
+#define BITSET(block, idx) block |= (1 << idx)
+#define BITCLEAR(block, idx) block &= ~(1 << idx)
+#define GET_BLOCKNUM(block_num, unit) block_num / unit
+#define GET_BITIDX(block_num, unit) block_num % unit
+
 struct monitor *global_monitor;
 struct superblock spb;
 
@@ -89,6 +95,9 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
   bitmap_read(spb.cur_bit, 0);
   bitmap_update(3, VALID);
 */
+  int arr[3];
+  printf("result : %d\n", search_bitmap(arr, 3));
+  printf("%d %d %d\n", arr[0], arr[1], arr[2]); 
 	fs_mkdir("/a/b/c/d/e/f/g/", 0755);
 
 	return NULL;
@@ -109,7 +118,7 @@ void super_init() {
   spb.d_bitmap_init_bn = D_BITMAP_INIT_BN;
   spb.inode_init_bn = INODE_INIT_BN;
   spb.free_inode = (DATA_INIT_BN - INODE_INIT_BN) * (PAGESIZE / sizeof(struct inode));
-  spb.free_d_block = DEVSIZE - DATA_INIT_BN;
+  spb.total_d_blocks = DEVSIZE - DATA_INIT_BN;
   bitmap_init();
   free_list_init();
 
@@ -122,6 +131,7 @@ void bitmap_init() {
 	for (i = D_BITMAP_INIT_BN; i < INODE_INIT_BN; i++)
     bitmap_write(bit, i);
 
+  spb.free_d_block = DEVSIZE - DATA_INIT_BN;
 	spb.cur_bit = bit;
   spb.cur_bit_bn = 0;
 }
@@ -161,37 +171,76 @@ void bitmap_write(d_bitmap *bitmap, uint32_t block_num) {
 }
 
 void bitmap_update(uint32_t data_block_num, uint8_t type) {
-  uint32_t block_num = data_block_num / (PAGESIZE * 8);
-  uint32_t bit_idx = data_block_num % (PAGESIZE * 8);
+  uint32_t block_num = GET_BLOCKNUM(data_block_num , (PAGESIZE * 8));
+  uint32_t bit_idx = GET_BITIDX(data_block_num, (PAGESIZE * 8));
   if(block_num != spb.cur_bit_bn) {
     bitmap_write(spb.cur_bit, spb.cur_bit_bn);
     bitmap_read(spb.cur_bit, block_num);
     spb.cur_bit_bn = block_num;
   }
-  if(type == VALID)
-    spb.cur_bit->bitset[bit_idx / 8] |= (1 << (bit_idx % 8));
-  else
-    spb.cur_bit->bitset[bit_idx / 8] &= ~(1 << (bit_idx % 8));
+  if(type == VALID) {
+    BITSET(spb.cur_bit->bitset[bit_idx / 8], (1 << (bit_idx % 8)));
+    spb.free_d_block--;
+  }
+  else {
+    BITCLEAR(spb.cur_bit->bitset[bit_idx / 8], (1 << (bit_idx % 8)));
+    spb.free_d_block++;
+  }
 }
 
 void data_read(void *data, uint32_t block_num) {
   pread(spb.fp, (char *)data, PAGESIZE, (block_num + DATA_INIT_BN) * PAGESIZE);
 }
+
 void data_write(void *data, uint32_t block_num) {
   pwrite(spb.fp, (char *)data, PAGESIZE, (block_num + DATA_INIT_BN) * PAGESIZE);
 }
+
 void inode_read(inode *node, int32_t inode_block_num) {
-  uint32_t block_num = data_block_num / (PAGESIZE / sizeof(inode));
-  uint32_t bit_idx = data_block_num % (PAGESIZE / sizeof(inode));
+  uint32_t block_num = GET_BLOCKNUM(inode_block_num, (PAGESIZE / sizeof(inode)));
+  uint32_t bit_idx = GET_BITIDX(data_block_num, (PAGESIZE / sizeof(inode)));
   i_block blk;
   pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
   *node = blk.i[bit_idx];
 }
+
 void inode_write(inode *node, uint32_t inode_block_num) {
-  uint32_t block_num = data_block_num / (PAGESIZE / sizeof(inode));
-  uint32_t bit_idx = data_block_num % (PAGESIZE / sizeof(inode));
+  uint32_t block_num = GET_BLOCKNUM(inode_block_num, (PAGESIZE / sizeof(inode)));
+  uint32_t bit_idx = GET_BITIDX(data_block_num, (PAGESIZE / sizeof(inode)));
   i_block blk;
   pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
   blk.i[bit_idx] = *node;
   pwrite(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
+}
+
+int search_bitmap(int *arr, int num)
+{
+	d_bitmap bitmap;
+	int a, b, c, bound = 0, i = 0;
+	int **new_arr = (int **)malloc(sizeof(int *) * num);
+	for (a = 0; a < num; a++)
+		new_arr[a] = (int *)malloc(sizeof(int) * 3);
+	for (c = 0; c < D_BITMAP_NUM; c++) {
+		bitmap_read(&bitmap, c);
+		for (a = 0; a < PAGESIZE; a++) {
+			for (b = 0; b < 8; b++) {
+				if (bound >= spb.total_d_blocks){
+					return -1;
+				}
+				if (BIT_CHECK(bitmap[a], b) == 0) {
+					new_arr[i][0] = c;
+					new_arr[i][1] = a;
+					new_arr[i][2] = b;
+					arr[i] = bound;
+					if (++i >= num) {
+            for (i = num - 1; i > 0; i--)
+              bitmap_update(new_arr[i][0] * PAGESIZE + new_arr[i][1] * 8 + new_arr[i][2], VALID);
+						return 0;
+					}
+				}
+				bound++;
+			}
+		}
+	}
+	return -1;
 }
