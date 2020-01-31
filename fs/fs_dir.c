@@ -23,6 +23,7 @@ int fs_mkdir (const char *path, mode_t mode) {
 	inode node;
 	parent = child = spb.root_directory;
 	strcpy(ppath, path);
+	printf("%s\n",ppath);
 	printf("start\n");
 	ptr = strtok(ppath, "/");
 	while (ptr != NULL){
