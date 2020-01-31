@@ -16,7 +16,11 @@ int fs_opendir (const char *path, struct fuse_file_info *fi) {
 }
 
 int fs_mkdir (const char *path, mode_t mode) {
-	
+	char *ptr = strtok(path, "/");
+	while (ptr != NULL){
+		printf("%s\n", ptr);
+    ptr = strtok(NULL, "/");
+	}
 	return 0;
 }
 
@@ -29,7 +33,7 @@ int fs_readdir (const char *path, void *buf, fuse_fill_dir_t filler, off_t off, 
 }
 
 int fs_rmdir (const char *path) {
-	
+
 	return 0;
 }
 
