@@ -228,7 +228,7 @@ int search_bitmap(int *arr, int num)
 				if (bound >= spb.total_d_blocks){
 					return -2;
 				}
-				if (BIT_CHECK(bitmap.bitset[a], b) == 0) {
+				if (BIT_CHECK(bitmap->bitset[a], b) == 0) {
 					new_arr[i][0] = c;
 					new_arr[i][1] = a;
 					new_arr[i][2] = b;
