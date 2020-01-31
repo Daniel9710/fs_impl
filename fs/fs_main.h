@@ -14,6 +14,7 @@
 #define G 1024 * M
 #define T 1024L * G
 
+#define SUPER_INIT_BN 0
 #define D_BITMAP_INIT_BN 1
 #define INODE_INIT_BN 76
 #define DATA_INIT_BN (INODE_INIT_BN + 100 * K)
