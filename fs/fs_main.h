@@ -26,7 +26,7 @@
 #define INVAL 0
 
 
-struct superblock {
+typedef struct superblock {
 	FILE *fp;
 	uint32_t root_directory;
 	uint32_t total_block_size;
@@ -37,28 +37,28 @@ struct superblock {
 	uint32_t free_d_block;
 	struct d_bitmap *cur_bit;
 	char reserve[PAGESIZE - 48];
-};
+}superblock;
 
-struct inode {
+typedef struct inode {
 
 	struct metadata attr;
 	uint32_t direct_ptr[DIRECT_PTR];
 	uint32_t indirect_ptr[INDIRECT_PTR];
 	uint32_t d_indirect_ptr[D_INDIRECT_PTR];
 
-};
+}inode;
 
-struct i_block {
+typedef struct i_block {
 	struct inode i[PAGESIZE / sizeof(struct inode)];
-};
+}i_block;
 
-struct d_bitmap {
+typedef struct d_bitmap {
 	char bitset[PAGESIZE];
-};
-struct free_list {
+}d_bitmap;
+typedef struct free_list {
 	uint32_t free_node[(PAGESIZE / 4) - 1];
 	uint32_t next;
-};
+}free_list;
 
 
 #endif
