@@ -73,9 +73,15 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #endif
 
   super_init();
+  int p;
   for(int i = 0; i < 64; i++){
-    for(int j = 0; j < 4; j++)
-      printf("%d", *(uint32_t *)&spb.cur_bit->bitset[i * 16 + j * 4]);
+    for(int j = 0; j < 4; j++) {
+      p = 0;
+      for(int k = 0; k < 8; k++) {
+        p |= spb.cur_bit->bitset[i * 16 + j *4] & (1 << k);
+      }
+      printf("%d",p);
+    }
     printf("\n");
   }
   printf("-----------------\n");
