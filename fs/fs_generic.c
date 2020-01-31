@@ -23,7 +23,6 @@
 struct monitor *global_monitor;
 struct superblock spb;
 
-
 int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
 
     return 0;
@@ -32,7 +31,6 @@ int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi)
 int fs_utimens (const char *path, const struct timespec ts[2], struct fuse_file_info *fi) {
 
 	return 0;
-
 }
 
 int fs_chmod (const char *path, mode_t mode, struct fuse_file_info *fi) {
@@ -138,7 +136,7 @@ void bitmap_init() {
 
 void free_list_init() {
   free_list ll;
-  int i, node_num = PAGESIZE / sizeof(uint32_t) - 2, i_num = spb.free_inode - 2, d_blk = spb.total_d_blocks - 1;
+  int i, node_num = ENTRYPERPAGE - 2, i_num = spb.free_inode - 2, d_blk = spb.total_d_blocks - 1;
   ll.next = -1;
   while(i_num > 1023) {
     for(i = node_num; i >= 0; --i)
@@ -146,12 +144,12 @@ void free_list_init() {
     bitmap_update(d_blk, VALID);
     data_write((void *)&ll, d_blk);
     ll.next = d_blk--;
-
   }
   for(i = node_num; i >= 0 && i_num >= 0; --i)
     ll.free_node[i] = i_num--;
   bitmap_update(d_blk, VALID);
   data_write((void *)&ll, d_blk);
+  spb.list_now = i;
   spb.list_first = d_blk;
 }
 void super_write() {
@@ -197,16 +195,16 @@ void data_write(void *data, uint32_t block_num) {
 }
 
 void inode_read(inode *node, int32_t inode_block_num) {
-  uint32_t block_num = GET_BLOCKNUM(inode_block_num, (PAGESIZE / sizeof(inode)));
-  uint32_t bit_idx = GET_BITIDX(inode_block_num, (PAGESIZE / sizeof(inode)));
+  uint32_t block_num = GET_BLOCKNUM(inode_block_num, INODEPERPAGE);
+  uint32_t bit_idx = GET_BITIDX(inode_block_num, INODEPERPAGE);
   i_block blk;
   pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
   *node = blk.i[bit_idx];
 }
 
 void inode_write(inode *node, uint32_t inode_block_num) {
-  uint32_t block_num = GET_BLOCKNUM(inode_block_num, (PAGESIZE / sizeof(inode)));
-  uint32_t bit_idx = GET_BITIDX(inode_block_num, (PAGESIZE / sizeof(inode)));
+  uint32_t block_num = GET_BLOCKNUM(inode_block_num, INODEPERPAGE);
+  uint32_t bit_idx = GET_BITIDX(inode_block_num, INODEPERPAGE);
   i_block blk;
   pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
   blk.i[bit_idx] = *node;
@@ -215,20 +213,21 @@ void inode_write(inode *node, uint32_t inode_block_num) {
 
 int search_bitmap(int *arr, int num)
 {
-	d_bitmap *bitmap = (d_bitmap *)malloc(sizeof(d_bitmap));
+	d_bitmap bitmap;
 	int a, b, c, bound = 0, i = 0;
 	int **new_arr = (int **)malloc(sizeof(int *) * num);
 	for (a = 0; a < num; a++)
 		new_arr[a] = (int *)malloc(sizeof(int) * 3);
   bitmap_write(spb.cur_bit, spb.cur_bit_bn);
 	for (c = 0; c < D_BITMAP_NUM; c++) {
-		bitmap_read(bitmap, c);
+		bitmap_read(&bitmap, c);
 		for (a = 0; a < PAGESIZE; a++) {
 			for (b = 0; b < 8; b++) {
 				if (bound >= spb.total_d_blocks){
-					return -2;
+          printf("ERROR : NO SUFFICIENT BLOCK\n");
+					return -1;
 				}
-				if (BIT_CHECK(bitmap->bitset[a], b) == 0) {
+				if (BIT_CHECK(bitmap.bitset[a], b) == 0) {
 					new_arr[i][0] = c;
 					new_arr[i][1] = a;
 					new_arr[i][2] = b;
@@ -243,5 +242,39 @@ int search_bitmap(int *arr, int num)
 			}
 		}
 	}
+  printf("ERROR : NO SUFFICIENT BLOCK\n");
 	return -1;
+}
+
+int new_inode(){
+  int blk_num = spb.list_first;
+  free_list ll;
+  if(spb.free_inode == 0)
+    return -1;
+  data_read((void *)&ll, blk_num);
+  if(spb.list_now == ENTRYPERPAGE - 1) {
+    bitmap_update(blk_num, INVALID);
+    spb.list_first = ll.next;
+    spb.list_now = 0;
+    data_read((void *)&ll, blk_num);
+  }
+  return ll.free_node[spb.list_now++];
+}
+
+void free_inode(int block_num){
+  int arr[1];
+  free_list *ll;
+  if(spb.list_now == 0) {
+    search_bitmap(arr, 1);
+    ll = (free_list *)calloc(1, sizeof(free_list));
+    ll.next = spb.list_first;
+    spb.list_first = arr[0];
+    spb.list_now = ENTRYPERPAGE - 2;
+    ll.free_node[spb.list_now] = block_num;
+  }
+  else {
+    data_read((void *)ll, spb.list_first);
+    ll.free_node[--spb.list_now] = block_num;
+  }
+  data_write((void *)ll, spb.list_first);
 }

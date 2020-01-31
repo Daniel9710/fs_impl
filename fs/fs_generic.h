@@ -29,6 +29,8 @@ void data_write(void *data, uint32_t block_num);
 void inode_read(inode *node, int32_t inode_block_num);
 void inode_write(inode *node, uint32_t inode_block_num);
 int search_bitmap(int *arr, int num);
+int new_inode();
+void free_inode(int block_num);
 
 
 #endif
