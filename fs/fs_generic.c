@@ -133,12 +133,15 @@ void free_list_init() {
   int i, node_num = PAGESIZE / sizeof(uint32_t) - 2, i_num = spb.free_inode - 2, d_blk = 0;
   ll.next = -1;
   while(i_num > 1023) {
+  printf("block : %d\n",d_blk);
     for(i = node_num; i >= 0; --i)
       ll.free_node[i] = i_num--;
     bitmap_update(d_blk, VALID);
     data_write((void *)&ll, d_blk);
     ll.next = d_blk++;
+
   }
+    printf("block : %d\n",d_blk);
   for(i = node_num; i >= 0 && i_num >= 0; --i)
     ll.free_node[i] = i_num--;
   bitmap_update(d_blk, VALID);
@@ -160,6 +163,7 @@ void bitmap_update(uint32_t data_block_num, uint8_t type) {
   if(block_num != spb.cur_bit_bn) {
     bitmap_write(spb.cur_bit, spb.cur_bit_bn);
     bitmap_read(spb.cur_bit, block_num);
+    spb.cur_bit_bn = block_num;
   }
   if(type == VALID)
     spb.cur_bit->bitset[bit_idx / (PAGESIZE / sizeof(uint8_t))] |= (1 << (bit_idx % sizeof(uint8_t)));
