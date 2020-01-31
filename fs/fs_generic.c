@@ -14,7 +14,7 @@
 #include "fs_dir.h"
 #include "fs_file.h"
 
-#define BIT_CHECK(block, idx) block & (1 << idx)
+#define BIT_CHECK(block, idx) (block & (1 << idx))
 #define BIT_SET(block, idx) block |= (1 << idx)
 #define BIT_CLEAR(block, idx) block &= ~(1 << idx)
 #define GET_BLOCKNUM(block_num, unit) block_num / unit
@@ -118,7 +118,7 @@ void super_init() {
   spb.d_bitmap_init_bn = D_BITMAP_INIT_BN;
   spb.inode_init_bn = INODE_INIT_BN;
   spb.free_inode = (DATA_INIT_BN - INODE_INIT_BN) * (PAGESIZE / sizeof(struct inode));
-  spb.total_d_blocks = DEVSIZE - DATA_INIT_BN;
+  spb.total_d_blocks = (DEVSIZE / PAGESIZE) - DATA_INIT_BN;
   bitmap_init();
   free_list_init();
 
@@ -131,7 +131,7 @@ void bitmap_init() {
 	for (i = D_BITMAP_INIT_BN; i < INODE_INIT_BN; i++)
     bitmap_write(bit, i);
 
-  spb.free_d_block = DEVSIZE - DATA_INIT_BN;
+  spb.free_d_block = (DEVSIZE / PAGESIZE) - DATA_INIT_BN;
 	spb.cur_bit = bit;
   spb.cur_bit_bn = 0;
 }
