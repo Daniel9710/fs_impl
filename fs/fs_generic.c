@@ -85,7 +85,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
     }
     printf("\n");
   }
-  
+
   bitmap_read(spb.cur_bit, 0);
   bitmap_update(3, VALID);
 */
@@ -181,6 +181,21 @@ void data_read(void *data, uint32_t block_num) {
 }
 void data_write(void *data, uint32_t block_num) {
   pwrite(spb.fp, (char *)data, PAGESIZE, (block_num + DATA_INIT_BN) * PAGESIZE);
+}
+void inode_read(inode *node, int32_t inode_block_num) {
+  uint32_t block_num = data_block_num / (PAGESIZE / sizeof(inode));
+  uint32_t bit_idx = data_block_num % (PAGESIZE / sizeof(inode));
+  i_block blk;
+  pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
+  *node = blk[bit_idx];
+}
+void inode_write(inode *node, uint32_t inode_block_num) {
+  uint32_t block_num = data_block_num / (PAGESIZE / sizeof(inode));
+  uint32_t bit_idx = data_block_num % (PAGESIZE / sizeof(inode));
+  i_block blk;
+  pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
+  blk[bit_idx] = *blk;
+  pwrite(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
 }
 
 

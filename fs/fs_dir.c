@@ -7,6 +7,7 @@
 #include "fs_dir.h"
 #include "metadata.h"
 #include <stdlib.h>
+#include "fs_generic.h"
 
 extern struct superblock spb;
 
@@ -17,15 +18,16 @@ int fs_opendir (const char *path, struct fuse_file_info *fi) {
 }
 
 int fs_mkdir (const char *path, mode_t mode) {
-	char *ppath = (char *)malloc(sizeof(char) * 60);
+	char ppath[60];
 	strcpy(ppath, path);
-	printf("%s\n",ppath);
+	uint32_t parent, child, tmp;
+	parent = child = tmp = spb.root_directory;
 	char *ptr = strtok(ppath, "/");
-	int cnt = 0;
-	printf("%d\n", cnt++);
+
+
 	while (ptr != NULL){
-		printf("%d %s\n", cnt++, ptr);
-	    	ptr = strtok(NULL, "/");
+		printf("%s\n", ptr);
+	  ptr = strtok(NULL, "/");
 	}
 	return 0;
 }
