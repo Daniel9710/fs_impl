@@ -21,6 +21,12 @@ void bitmap_init();
 void free_list_init();
 void super_update();
 void super_read();
-struct d_bitmap *bitmap_read(uint32_t block_num);
+void bitmap_read(d_bitmap *bitmap, uint32_t block_num);
+void bitmap_write(d_bitmap *bitmap, uint32_t block_num);
+void bitmap_update(uint32_t data_block_num, char type);
+void data_read(void *data, uint32_t block_num);
+void data_write(void *data, uint32_t block_num);
+
+
 
 #endif
