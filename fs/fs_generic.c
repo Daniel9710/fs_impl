@@ -185,13 +185,13 @@ void inode_read(inode *node, int32_t inode_block_num) {
   uint32_t bit_idx = data_block_num % (PAGESIZE / sizeof(inode));
   i_block blk;
   pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
-  *node = blk[bit_idx];
+  *node = blk.i[bit_idx];
 }
 void inode_write(inode *node, uint32_t inode_block_num) {
   uint32_t block_num = data_block_num / (PAGESIZE / sizeof(inode));
   uint32_t bit_idx = data_block_num % (PAGESIZE / sizeof(inode));
   i_block blk;
   pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
-  blk[bit_idx] = *blk;
+  blk.i[bit_idx] = *node;
   pwrite(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
 }
