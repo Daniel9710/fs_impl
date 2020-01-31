@@ -23,11 +23,12 @@
 #define D_INDIRECT_PTR 2
 #define ROOT_DIR 0
 
-#define INVAL 0
+#define INVALID 0
+#define VALID 1
 
 
-struct superblock {
-	FILE *fp;
+typedef struct superblock {
+	int fp;
 	uint32_t root_directory;
 	uint32_t total_block_size;
 	uint32_t d_bitmap_init_bn;
@@ -35,30 +36,31 @@ struct superblock {
 	uint32_t list_first;
 	uint32_t free_inode;
 	uint32_t free_d_block;
+	uint32_t cur_bit_bn;
 	struct d_bitmap *cur_bit;
-	char reserve[PAGESIZE - 48];
-};
+	char reserve[PAGESIZE - 40];
+}superblock;
 
-struct inode {
+typedef struct inode {
 
 	struct metadata attr;
 	uint32_t direct_ptr[DIRECT_PTR];
 	uint32_t indirect_ptr[INDIRECT_PTR];
 	uint32_t d_indirect_ptr[D_INDIRECT_PTR];
 
-};
+}inode;
 
-struct i_block {
+typedef struct i_block {
 	struct inode i[PAGESIZE / sizeof(struct inode)];
-};
+}i_block;
 
-struct d_bitmap {
-	char bitset[PAGESIZE];
-};
-struct free_list {
-	uint32_t free_node[(PAGESIZE / 4) - 1];
-	uint32_t next;
-};
+typedef struct d_bitmap {
+	uint8_t bitset[PAGESIZE];
+}d_bitmap;
+typedef struct free_list {
+	int32_t free_node[(PAGESIZE / 4) - 1];
+	int32_t next;
+}free_list;
 
 
 #endif
