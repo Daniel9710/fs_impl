@@ -154,17 +154,17 @@ void bitmap_write(d_bitmap *bitmap, uint32_t block_num) {
   pwrite(spb.fp, (char *)bitmap, PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
 }
 
-void bitmap_update(uint32_t data_block_num, char type) {
-  uint32_t block_num = data_block_num / (PAGESIZE * sizeof(char));
-  uint32_t bit_idx = data_block_num % (PAGESIZE * sizeof(char));
+void bitmap_update(uint32_t data_block_num, uint8_t type) {
+  uint32_t block_num = data_block_num / (PAGESIZE * sizeof(uint8_t));
+  uint32_t bit_idx = data_block_num % (PAGESIZE * sizeof(uint8_t));
   if(block_num != spb.cur_bit_bn) {
     bitmap_write(spb.cur_bit, spb.cur_bit_bn);
     bitmap_read(spb.cur_bit, block_num);
   }
   if(type == VALID)
-    spb.cur_bit->bitset[bit_idx / (PAGESIZE / sizeof(char))] |= (1 << (bit_idx % sizeof(char)));
+    spb.cur_bit->bitset[bit_idx / (PAGESIZE / sizeof(uint8_t))] |= (1 << (bit_idx % sizeof(uint8_t)));
   else
-    spb.cur_bit->bitset[bit_idx / (PAGESIZE / sizeof(char))] &= ~(1 << (bit_idx % sizeof(char)));
+    spb.cur_bit->bitset[bit_idx / (PAGESIZE / sizeof(uint8_t))] &= ~(1 << (bit_idx % sizeof(uint8_t)));
 }
 
 void data_read(void *data, uint32_t block_num) {

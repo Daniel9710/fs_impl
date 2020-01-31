@@ -38,7 +38,7 @@ typedef struct superblock {
 	uint32_t free_d_block;
 	uint32_t cur_bit_bn;
 	struct d_bitmap *cur_bit;
-	char reserve[PAGESIZE - 52];
+	char reserve[PAGESIZE - 40];
 }superblock;
 
 typedef struct inode {
@@ -55,7 +55,7 @@ typedef struct i_block {
 }i_block;
 
 typedef struct d_bitmap {
-	char bitset[PAGESIZE];
+	uint8_t bitset[PAGESIZE];
 }d_bitmap;
 typedef struct free_list {
 	int32_t free_node[(PAGESIZE / 4) - 1];
