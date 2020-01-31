@@ -71,20 +71,6 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #ifdef MONITOR
 	monitor_init(&global_monitor);
 #endif
-<<<<<<< HEAD
-  struct superblock super;
-	spb.fp = open("a", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
-	printf("hello %ld \n", spb.fp);
-  spb.root_directory = ROOT_DIR;
-  spb.total_block_size = DEVSIZE;
-  spb.d_bitmap_init_bn = D_BITMAP_INIT_BN;
-  spb.inode_init_bn = INODE_INIT_BN;
-  spb.list_first = 0;
-  spb.free_inode = (DATA_INIT_BN - INODE_INIT_BN) * (PAGESIZE / sizeof(struct inode));
-  spb.free_d_block = DEVSIZE - DATA_INIT_BN;
-  spb.cur_bit = NULL;
-=======
->>>>>>> 497bb66949b5c813b12cd0f6caeed8edc1b388ae
 
   super_init();
   for(int i = 0; i < 1024; i++)
@@ -162,7 +148,7 @@ void bitmap_read(d_bitmap *bitmap, uint32_t block_num) {
 }
 
 void bitmap_write(d_bitmap *bitmap, uint32_t block_num) {
-  pwrite(spb.fp, (char *)bitmap, PAGESIZE, (block_num + D_BITMAP_INIT_BN * PAGESIZE);
+  pwrite(spb.fp, (char *)bitmap, PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
 }
 
 void bitmap_update(uint32_t data_block_num, char type) {

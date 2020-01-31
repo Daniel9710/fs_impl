@@ -28,7 +28,7 @@
 
 
 typedef struct superblock {
-	FILE *fp;
+	int fp;
 	uint32_t root_directory;
 	uint32_t total_block_size;
 	uint32_t d_bitmap_init_bn;
