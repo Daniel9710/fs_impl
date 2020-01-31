@@ -72,9 +72,10 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 	monitor_init(&global_monitor);
 #endif
 
-  super_init();
+  super_init();/*
   for(int i = 0; i < 1024; i++)
     printf("%d \n", *(int *)&spb.cur_bit->bitset[i * 4]);
+    */
   pread(spb.fp, (char *)spb.cur_bit, PAGESIZE, (D_BITMAP_INIT_BN + 3) * PAGESIZE);
   printf("------------------\n");
   /*
