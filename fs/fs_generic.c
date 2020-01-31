@@ -171,9 +171,9 @@ void bitmap_update(uint32_t data_block_num, uint8_t type) {
     spb.cur_bit_bn = block_num;
   }
   if(type == VALID)
-    spb.cur_bit->bitset[bit_idx / (PAGESIZE / 8)] |= (1 << (bit_idx % 8));
+    spb.cur_bit->bitset[bit_idx / 8] |= (1 << (bit_idx % 8));
   else
-    spb.cur_bit->bitset[bit_idx / (PAGESIZE / 8)] &= ~(1 << (bit_idx % 8));
+    spb.cur_bit->bitset[bit_idx / 8] &= ~(1 << (bit_idx % 8));
 }
 
 void data_read(void *data, uint32_t block_num) {
