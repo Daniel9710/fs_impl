@@ -217,6 +217,7 @@ int search_bitmap(int *arr, int num)
 {
 	d_bitmap bitmap;
 	int a, b, c, bound = 0, i = 0;
+  printf("%d\n", spb.total_d_blocks);
 	int **new_arr = (int **)malloc(sizeof(int *) * num);
 	for (a = 0; a < num; a++)
 		new_arr[a] = (int *)malloc(sizeof(int) * 3);
@@ -225,7 +226,7 @@ int search_bitmap(int *arr, int num)
 		for (a = 0; a < PAGESIZE; a++) {
 			for (b = 0; b < 8; b++) {
 				if (bound >= spb.total_d_blocks){
-					return -1;
+					return -2;
 				}
 				if (BIT_CHECK(bitmap.bitset[a], b) == 0) {
 					new_arr[i][0] = c;
