@@ -73,6 +73,12 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #endif
 
   super_init();
+  for(int i = 0; i < 64; i++){
+    for(int j = 0; j < 4; j++)
+      printf("%d", *(uint32_t *)&spb.cur_bit->bitset[i * 16 + j * 4]);
+    printf("\n");
+  }
+  printf("-----------------\n");
   bitmap_read(spb.cur_bit, 0);
   bitmap_update(3, VALID);
   for(int i = 0; i < 64; i++){
