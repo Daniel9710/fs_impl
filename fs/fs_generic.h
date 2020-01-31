@@ -14,8 +14,13 @@ int fs_access (const char *, int);
 int fs_symlink (const char *, const char *);
 int fs_readlink (const char *, char *, size_t);
 void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg);
-void fs_destroy (void *private_data); 
+void fs_destroy (void *private_data);
 
+void super_init();
 void bitmap_init();
 void free_list_init();
+void super_update();
+void super_read();
+d_bitmap *bitmap_read(uint32_t block_num);
+
 #endif

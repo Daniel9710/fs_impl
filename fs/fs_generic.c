@@ -71,22 +71,15 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #ifdef MONITOR
 	monitor_init(&global_monitor);
 #endif
-  superblock super;
-	spb.fp = open("a", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
-	printf("hello %ld \n", spb.fp);
-  spb.root_directory = ROOT_DIR;
-  spb.total_block_size = DEVSIZE;
-  spb.d_bitmap_init_bn = D_BITMAP_INIT_BN;
-  spb.inode_init_bn = INODE_INIT_BN;
-  spb.list_first = 0;
-  spb.free_inode = (DATA_INIT_BN - INODE_INIT_BN) * (PAGESIZE / sizeof(struct inode));
-  spb.free_d_block = DEVSIZE - DATA_INIT_BN;
-  spb.cur_bit = NULL;
 
-  printf("%d\n", sizeof(struct superblock));
-  write(spb.fp, (char *)&spb, PAGESIZE);
-  pread(spb.fp, (char *)&super, PAGESIZE, 0);
-  printf("hello %ld \n", super.fp);
+  super_init();
+  bitmap_init();
+  for(int i = 0; i < 1024; i++)
+    printf("%d \n", *(int *)spb.cur_bit->bitset[i * 4]);
+  pread(spb.fp, (char *)spb.cur_bit, PAGESIZE, (D_BITMAP_INIT_BN + 3) * PAGESIZE);
+  for(int i = 0; i < 1024; i++)
+    printf("%d \n", *(int *)spb.cur_bit->bitset[i * 4]);
+
 	fs_mkdir("/", 0755);
 
 	return NULL;
@@ -100,16 +93,43 @@ void fs_destroy (void *private_data) {
 
 	return;
 }
+void super_init() {
+  spb.fp = open("a", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
+  spb.root_directory = ROOT_DIR;
+  spb.total_block_size = DEVSIZE;
+  spb.d_bitmap_init_bn = D_BITMAP_INIT_BN;
+  spb.inode_init_bn = INODE_INIT_BN;
+  spb.list_first = 0;
+  spb.free_inode = (DATA_INIT_BN - INODE_INIT_BN) * (PAGESIZE / sizeof(struct inode));
+  spb.free_d_block = DEVSIZE - DATA_INIT_BN;
+  spb.cur_bit = NULL;
+
+  super_update();
+}
+
+void super_update() {
+  pwrite(spb.fp, (char *)&spb, PAGESIZE, SUPER_INIT_BN);
+}
+
+void super_read() {
+  pread(spb.fp, (char *)&spb, PAGESIZE, SUPER_INIT_BN);
+}
 
 void bitmap_init() {
 	struct d_bitmap *bit = (struct d_bitmap *)calloc(1, sizeof(struct d_bitmap));
 	int i;
-	lseek(spb.fp, D_BITMAP_INIT_BN * PAGESIZE, SEEK_SET);
 
 	for (i = D_BITMAP_INIT_BN; i < INODE_INIT_BN; i++)
-		write(spb.fp, (char *)bit, PAGESIZE);
+		pwrite(spb.fp, (char *)bit, PAGESIZE, i * PAGESIZE);
 
 	spb.cur_bit = bit;
+}
+
+void free_list_init(){
+
+}
+d_bitmap *bitmap_read(uint32_t block_num){
+  
 }
 /*
 void free_list_init() {
