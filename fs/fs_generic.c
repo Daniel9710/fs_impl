@@ -263,18 +263,17 @@ int new_inode(){
 
 void free_inode(int block_num){
   int arr[1];
-  free_list *ll;
+  free_list *ll = (free_list *)calloc(1, sizeof(free_list));
   if(spb.list_now == 0) {
     search_bitmap(arr, 1);
-    ll = (free_list *)calloc(1, sizeof(free_list));
-    ll.next = spb.list_first;
+    ll->next = spb.list_first;
     spb.list_first = arr[0];
     spb.list_now = ENTRYPERPAGE - 2;
-    ll.free_node[spb.list_now] = block_num;
+    ll->free_node[spb.list_now] = block_num;
   }
   else {
     data_read((void *)ll, spb.list_first);
-    ll.free_node[--spb.list_now] = block_num;
+    ll->free_node[--spb.list_now] = block_num;
   }
   data_write((void *)ll, spb.list_first);
 }
