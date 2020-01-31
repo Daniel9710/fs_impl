@@ -138,14 +138,14 @@ void bitmap_init() {
 
 void free_list_init() {
   free_list ll;
-  int i, node_num = PAGESIZE / sizeof(uint32_t) - 2, i_num = spb.free_inode - 2, d_blk = 0;
+  int i, node_num = PAGESIZE / sizeof(uint32_t) - 2, i_num = spb.free_inode - 2, d_blk = spb.total_d_blocks - 1;
   ll.next = -1;
   while(i_num > 1023) {
     for(i = node_num; i >= 0; --i)
       ll.free_node[i] = i_num--;
     bitmap_update(d_blk, VALID);
     data_write((void *)&ll, d_blk);
-    ll.next = d_blk++;
+    ll.next = d_blk--;
 
   }
   for(i = node_num; i >= 0 && i_num >= 0; --i)
