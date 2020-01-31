@@ -35,7 +35,7 @@ struct superblock {
 	uint32_t free_inode;
 	uint32_t free_d_block;
 	struct d_bitmap *cur_bit;
-	
+	char reserve[PAGESIZE - 48];
 };
 
 struct inode {
