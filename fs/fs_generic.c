@@ -98,7 +98,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
   int arr[3];
   printf("result : %d\n", search_bitmap(arr, 3));
   printf("%d %d %d\n", arr[0], arr[1], arr[2]);
-	fs_mkdir("/a/b/c/d/e/f/g/", 0755);
+	fs_mkdir("a/b/c/d/e/f/g", 0755);
 
 	return NULL;
 }
@@ -215,20 +215,19 @@ void inode_write(inode *node, uint32_t inode_block_num) {
 
 int search_bitmap(int *arr, int num)
 {
-	d_bitmap bitmap;
+	d_bitmap *bitmap = (d_bitmap *)malloc(sizeof(d_bitmap));
 	int a, b, c, bound = 0, i = 0;
   printf("%d\n", spb.total_d_blocks);
 	int **new_arr = (int **)malloc(sizeof(int *) * num);
 	for (a = 0; a < num; a++)
 		new_arr[a] = (int *)malloc(sizeof(int) * 3);
 	for (c = 0; c < D_BITMAP_NUM; c++) {
-		bitmap_read(&bitmap, c);
+		bitmap_read(bitmap, c);
 		for (a = 0; a < PAGESIZE; a++) {
 			for (b = 0; b < 8; b++) {
 				if (bound >= spb.total_d_blocks){
 					return -2;
 				}
-        printf("%d\n",bound);
 				if (BIT_CHECK(bitmap.bitset[a], b) == 0) {
 					new_arr[i][0] = c;
 					new_arr[i][1] = a;
