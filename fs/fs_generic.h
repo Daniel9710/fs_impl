@@ -19,7 +19,15 @@ void fs_destroy (void *private_data);
 void super_init();
 void bitmap_init();
 void free_list_init();
-
+void super_write();
+void super_read();
+void bitmap_read(d_bitmap *bitmap, uint32_t block_num);
+void bitmap_write(d_bitmap *bitmap, uint32_t block_num);
+void bitmap_update(uint32_t data_block_num, uint8_t type);
+void data_read(void *data, uint32_t block_num);
+void data_write(void *data, uint32_t block_num);
+void inode_read(int32_t inode_block_num);
+void inode_write(inode *node, uint32_t inode_block_num);
 
 
 

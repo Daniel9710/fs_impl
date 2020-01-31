@@ -7,6 +7,7 @@
 #include "fs_dir.h"
 #include "metadata.h"
 #include <stdlib.h>
+#include "fs_generic.h"
 
 extern struct superblock spb;
 
