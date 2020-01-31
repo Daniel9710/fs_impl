@@ -83,6 +83,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
   spb.free_d_block = DEVSIZE - DATA_INIT_BN;
   spb.cur_bit = NULL;
 
+  printf("%d\n", sizeof(struct superblock));
   write(spb.fp, (char *)&spb, PAGESIZE);
   pread(spb.fp, (char *)&super, PAGESIZE, 0);
   printf("hello %d \n", super.fp);
