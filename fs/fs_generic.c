@@ -14,9 +14,9 @@
 #include "fs_dir.h"
 #include "fs_file.h"
 
-#define BITCHECK(block, idx) block & (1 << idx)
-#define BITSET(block, idx) block |= (1 << idx)
-#define BITCLEAR(block, idx) block &= ~(1 << idx)
+#define BIT_CHECK(block, idx) block & (1 << idx)
+#define BIT_SET(block, idx) block |= (1 << idx)
+#define BIT_CLEAR(block, idx) block &= ~(1 << idx)
 #define GET_BLOCKNUM(block_num, unit) block_num / unit
 #define GET_BITIDX(block_num, unit) block_num % unit
 
@@ -179,11 +179,11 @@ void bitmap_update(uint32_t data_block_num, uint8_t type) {
     spb.cur_bit_bn = block_num;
   }
   if(type == VALID) {
-    BITSET(spb.cur_bit->bitset[bit_idx / 8], (1 << (bit_idx % 8)));
+    BIT_SET(spb.cur_bit->bitset[bit_idx / 8], (1 << (bit_idx % 8)));
     spb.free_d_block--;
   }
   else {
-    BITCLEAR(spb.cur_bit->bitset[bit_idx / 8], (1 << (bit_idx % 8)));
+    BIT_CLEAR(spb.cur_bit->bitset[bit_idx / 8], (1 << (bit_idx % 8)));
     spb.free_d_block++;
   }
 }
@@ -206,7 +206,7 @@ void inode_read(inode *node, int32_t inode_block_num) {
 
 void inode_write(inode *node, uint32_t inode_block_num) {
   uint32_t block_num = GET_BLOCKNUM(inode_block_num, (PAGESIZE / sizeof(inode)));
-  uint32_t bit_idx = GET_BITIDX(data_block_num, (PAGESIZE / sizeof(inode)));
+  uint32_t bit_idx = GET_BITIDX(inode_block_num, (PAGESIZE / sizeof(inode)));
   i_block blk;
   pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
   blk.i[bit_idx] = *node;
