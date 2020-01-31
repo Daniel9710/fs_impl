@@ -97,7 +97,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 */
   int arr[3];
   printf("result : %d\n", search_bitmap(arr, 3));
-  printf("%d %d %d\n", arr[0], arr[1], arr[2]); 
+  printf("%d %d %d\n", arr[0], arr[1], arr[2]);
 	fs_mkdir("/a/b/c/d/e/f/g/", 0755);
 
 	return NULL;
@@ -198,7 +198,7 @@ void data_write(void *data, uint32_t block_num) {
 
 void inode_read(inode *node, int32_t inode_block_num) {
   uint32_t block_num = GET_BLOCKNUM(inode_block_num, (PAGESIZE / sizeof(inode)));
-  uint32_t bit_idx = GET_BITIDX(data_block_num, (PAGESIZE / sizeof(inode)));
+  uint32_t bit_idx = GET_BITIDX(inode_block_num, (PAGESIZE / sizeof(inode)));
   i_block blk;
   pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
   *node = blk.i[bit_idx];
