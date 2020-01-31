@@ -217,10 +217,10 @@ int search_bitmap(int *arr, int num)
 {
 	d_bitmap *bitmap = (d_bitmap *)malloc(sizeof(d_bitmap));
 	int a, b, c, bound = 0, i = 0;
-  printf("%d\n", spb.total_d_blocks);
 	int **new_arr = (int **)malloc(sizeof(int *) * num);
 	for (a = 0; a < num; a++)
 		new_arr[a] = (int *)malloc(sizeof(int) * 3);
+  bitmap_write(spb.cur_bit, spb.cur_bit_bn)
 	for (c = 0; c < D_BITMAP_NUM; c++) {
 		bitmap_read(bitmap, c);
 		for (a = 0; a < PAGESIZE; a++) {
