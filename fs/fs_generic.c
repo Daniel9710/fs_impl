@@ -73,13 +73,13 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #endif
 
   super_init();
-  for(int i = 0; i < 256; i++){
+  bitmap_read(spb.cur_bit);
+  bitmap_update(3, VALID);
+  for(int i = 0; i < 64; i++){
     for(int j = 0; j < 4; j++)
-      printf("%d", *(int *)&spb.cur_bit->bitset[i * 16 + j * 4]);
+      printf("%d", *(uint32_t *)&spb.cur_bit->bitset[i * 16 + j * 4]);
     printf("\n");
   }
-
-  pread(spb.fp, (char *)spb.cur_bit, PAGESIZE, (D_BITMAP_INIT_BN + 3) * PAGESIZE);
 
 
 	fs_mkdir("/", 0755);
@@ -104,7 +104,7 @@ void super_init() {
   spb.free_inode = (DATA_INIT_BN - INODE_INIT_BN) * (PAGESIZE / sizeof(struct inode));
   spb.free_d_block = DEVSIZE - DATA_INIT_BN;
   bitmap_init();
-  free_list_init();
+  //free_list_init();
 
   super_update();
 }
