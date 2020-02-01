@@ -85,7 +85,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 		buf[1] = 5;
 		buf[5] = 6;
 		for(int i = 0; i < 64; i++){
-				for(int j = 0; j < 4; j++) {
+				for(int j = 0; j < 16; j++) {
 						p = 0;
 						for(int k = 0; k < 8; k++) {
 							p |= buf[i * 16 + j] & (1 << k);
@@ -102,7 +102,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 	printf("%ld\n",pread(spb.fp, buf, PAGESIZE, PAGESIZE));
 	printf("-------------------\n");
 	for(int i = 0; i < 64; i++){
-			for(int j = 0; j < 4; j++) {
+			for(int j = 0; j < 16; j++) {
 					p = 0;
 					for(int k = 0; k < 8; k++) {
 						p |= buf[i * 16 + j] & (1 << k);
