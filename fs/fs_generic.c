@@ -82,6 +82,8 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 	//bitmap_write(spb.cur_bit, spb.cur_bit_bn);
 	memset(buf,0,PAGESIZE);
     	int p;
+		buf[1] = 5;
+		buf[5] = 6;
 		for(int i = 0; i < 64; i++){
 				for(int j = 0; j < 4; j++) {
 						p = 0;
@@ -94,9 +96,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 		}
 
 	//fs_mkdir("/", 0755);
-	buf[1] = 5;
-	buf[5] = 6;
-	printf("fp : %d\n", spb.fp);
+	buf[12] = 7;
 	printf("%ld\t",pwrite(spb.fp, buf, PAGESIZE, PAGESIZE));
 	buf[2] = 2;
 	printf("%ld\n",pread(spb.fp, buf, PAGESIZE, PAGESIZE));
