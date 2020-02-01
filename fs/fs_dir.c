@@ -22,11 +22,8 @@ int fs_mkdir (const char *path, mode_t mode) {
 	uint32_t parent, child, inum;
 	inode node;
 	time_t t = time(NULL);
-	struct fuse_context *fs_cxt = (fuse_context *)malloc(sizeof(fuse_context));
+	struct fuse_context *fs_cxt = (struct fuse_context *)malloc(sizeof(struct fuse_context));
 	fs_cxt = fuse_get_context();
-	printf("\n%d\n", fs_cxt->uid);
-	printf("%d\n", fs_cxt->gid);
-	printf("%d\n", fs_cxt->pid);
 	parent = child = spb.root_directory;
 	strcpy(ppath, path);
 	printf("%s\n",ppath);
@@ -38,10 +35,8 @@ int fs_mkdir (const char *path, mode_t mode) {
 	}
 	if(parent == child) {
 		inum = new_inode();
-		node.attr.mode = mode;
-		node.attr.nlink = 1;
-		node.attr.uid = fs_cxt->uid;
-		node.attr.gid = fs_cxt->gid;
+		metadata_init(&node.attr, mode, 4096, inum);
+		
 	}
 	return 0;
 }

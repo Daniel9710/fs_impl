@@ -278,3 +278,17 @@ void free_inode(int block_num){
   }
   data_write((void *)ll, spb.list_first);
 }
+void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino) {
+	time_t t = time(NULL);
+	struct fuse_context fs_cxt = *fuse_get_context();
+
+	meta->mode = mode;
+	meta->nlink = 1;
+	meta->uid = fs_cxt.uid;
+	meta->gid = fs_cxt.gid;
+	meta->size = size;
+	meta->atime = t;
+	meta->ctime = t;
+	meta->mtime = t;
+	meta->ino = ino;
+}
