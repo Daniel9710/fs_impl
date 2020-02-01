@@ -46,7 +46,7 @@ int fs_mkdir (const char *path, mode_t mode) {
 
 	metadata_init(&node.attr, mode, 4096, inum);
 
-	printf("A);
+	printf("A");
 	if(search_bitmap(entry_block, 1) < 0){
 		free_inode(inum); return -1;
 	}
