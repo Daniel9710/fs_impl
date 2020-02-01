@@ -25,7 +25,8 @@ struct monitor *global_monitor;
 struct superblock spb;
 
 int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
-
+	if(fi)
+		printf("DD");
 
     return 0;
 }
@@ -78,26 +79,8 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 	monitor_init(&global_monitor);
 #endif
 	super_init();
-	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
-	bitmap_read(spb.cur_bit, spb.cur_bit_bn);
-	printf("-------------------\n");
-	for(int i = 0; i < 64; i++){
-			for(int j = 0; j < 16; j++){
-				printf("%x ",*(uint32_t *)&spb.cur_bit->bitset[(i * 16 + j) * 4]);
-			}
-		 printf("\n");
-	}
-	//bitmap_write(spb.cur_bit, spb.cur_bit_bn);
+
 	fs_mkdir("/", 0755);
-	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
-	bitmap_read(spb.cur_bit, spb.cur_bit_bn);
-	printf("-------------------\n");
-	for(int i = 0; i < 64; i++){
-			for(int j = 0; j < 16; j++){
-				printf("%x ",*(uint32_t *)&spb.cur_bit->bitset[(i * 16 + j) * 4]);
-			}
-		 printf("\n");
-	}
 	return NULL;
 }
 
@@ -120,7 +103,7 @@ void super_init() {
   	spb.inode_init_bn = INODE_INIT_BN;
   	spb.free_inode = (DATA_INIT_BN - INODE_INIT_BN) * (PAGESIZE / sizeof(struct inode));
   	spb.total_d_blocks = (DEVSIZE / PAGESIZE) - DATA_INIT_BN;
- 
+
 	bitmap_init();
   	free_list_init();
 
@@ -345,4 +328,15 @@ void update_direntry(dir_block *dir, int inum, char *ptr, int idx, int blk) {
     strcpy(dir->entry[idx].name, ptr);
     dir->entry[idx].inode_num = inum;
     data_write((void *)dir, blk);
+}
+void cur_bit_test() {
+	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
+	bitmap_read(spb.cur_bit, spb.cur_bit_bn);
+	printf("-------------------\n");
+	for(int i = 0; i < 64; i++){
+			for(int j = 0; j < 16; j++){
+				printf("%x ",*(uint32_t *)&spb.cur_bit->bitset[(i * 16 + j) * 4]);
+			}
+		 printf("\n");
+	}
 }
