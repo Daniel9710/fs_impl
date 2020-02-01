@@ -1,4 +1,5 @@
 #define _LARGEFILE64_SOURCE
+#define _XOPEN_SOURCE 500
 
 #include <stdio.h>
 #include <string.h>
@@ -76,33 +77,36 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #ifdef MONITOR
 	monitor_init(&global_monitor);
 #endif
-
+	char buf[PAGESIZE];
 	super_init();
 	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
-    int p;
-    for(int i = 0; i < 64; i++){
-          for(int j = 0; j < 4; j++) {
-                p = 0;
-                for(int k = 0; k < 8; k++) {
-                    p |= spb.cur_bit->bitset[i * 16 + j * 4] & (1 << k);
-                }
-                printf("%d ",p);
-          }
-          printf("\n");
-    }
+	memset(buf,0,PAGESIZE);
+    	int p;
+    	for(int i = 0; i < 64; i++){
+    	      	for(int j = 0; j < 4; j++) {
+    	            	p = 0;
+            	    	for(int k = 0; k < 8; k++) {
+               			p |= buf[i * 16 + j * 4] & (1 << k);
+                	}
+                	printf("%d ",p);
+          	}
+         	 printf("\n");
+    	}
 
 	//fs_mkdir("/", 0755);
-	spb.cur_bit->bitset[0] = 5;
-	spb.cur_bit->bitset[3] = 6;
-	pwrite(spb.fp, (void *)spb.cur_bit,  PAGESIZE, (spb.cur_bit_bn + D_BITMAP_INIT_BN) * PAGESIZE);
-	spb.cur_bit->bitset[5] = 2;
-	pread(spb.fp, (void *)spb.cur_bit,  PAGESIZE, (spb.cur_bit_bn + D_BITMAP_INIT_BN) * PAGESIZE);
-	printf("-------------------");
+	buf[1] = 5;
+	buf[3] = 6;
+	printf("%ld\n", lseek(spb.fp, PAGESIZE,SEEK_SET));
+	printf("%ld\t",write(spb.fp, buf,  PAGESIZE));
+	buf[2] = 2;
+	printf("%ld\n", lseek(spb.fp, PAGESIZE, SEEK_SET));
+	printf("%ld\n",read(spb.fp, buf,  PAGESIZE));
+	printf("-------------------\n");
 	for(int i = 0; i < 64; i++){
           for(int j = 0; j < 4; j++) {
                 p = 0;
                 for(int k = 0; k < 8; k++) {
-                    p |= spb.cur_bit->bitset[i * 16 + j *4] & (1 << k);
+                    p |= buf[i * 16 + j *4] & (1 << k);
                 }
                 printf("%d ",p);
           }
@@ -122,7 +126,7 @@ void fs_destroy (void *private_data) {
 void super_init() {
 	int i;
 	char c[PAGESIZE];
-	spb.fp = open("a", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
+	spb.fp = open("a", O_RDWR | O_CREAT | O_TRUNC | O_LARGEFILE, 0644);
 	for(i = 0; i < DEVSIZE / PAGESIZE; i++)
 		write(spb.fp, c, PAGESIZE);
 	lseek(spb.fp, 0, SEEK_SET);
