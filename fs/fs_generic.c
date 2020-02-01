@@ -84,14 +84,17 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
           for(int j = 0; j < 4; j++) {
                 p = 0;
                 for(int k = 0; k < 8; k++) {
-                    p |= spb.cur_bit->bitset[i * 16 + j *4] & (1 << k);
+                    p |= spb.cur_bit->bitset[i * 16 + j * 4] & (1 << k);
                 }
                 printf("%d ",p);
           }
           printf("\n");
     }
 
-	fs_mkdir("/", 0755);
+	//fs_mkdir("/", 0755);
+	spb.cur_bit.bitset[0] = 5;
+	spb.cur_bit.bitset[3] = 5;
+	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
 	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
     for(int i = 0; i < 64; i++){
           for(int j = 0; j < 4; j++) {
@@ -103,7 +106,6 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
           }
           printf("\n");
     }
-
 	return NULL;
 }
 
@@ -121,6 +123,7 @@ void super_init() {
 	spb.fp = open("a", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
 	for(i = 0; i < DEVSIZE / PAGESIZE; i++)
 		write(spb.fp, c, PAGESIZE);
+	lseek(spb.fp, 0, SEEK_SET);
   	spb.root_directory = ROOT_DIR;
   	spb.total_block_size = DEVSIZE;
   	spb.d_bitmap_init_bn = D_BITMAP_INIT_BN;
@@ -146,7 +149,7 @@ void bitmap_init() {
 
 void free_list_init() {
   	free_list ll;
-  	int i, node_num = ENTRYPERPAGE - 2, i_num = spb.free_inode - 2, d_blk = spb.total_d_blocks - 1;
+  	int i, node_num = ENTRYPERPAGE - 2, i_num = spb.free_inode - 1, d_blk = spb.total_d_blocks - 1;
   	ll.next = -1;
   	while(i_num > 1023) {
     	for(i = node_num; i >= 0; --i)
@@ -157,6 +160,8 @@ void free_list_init() {
   	}
   	for(i = node_num; i >= 0 && i_num >= 0; --i)
     	ll.free_node[i] = i_num--;
+	for(;i >= 0;--i)
+		ll.free_node[i] = -1;
   	bitmap_update(d_blk, VALID);
   	data_write((void *)&ll, d_blk);
   	spb.list_now = i;
