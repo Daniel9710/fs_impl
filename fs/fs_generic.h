@@ -23,7 +23,7 @@ void super_write();
 void super_read();
 void bitmap_read(d_bitmap *bitmap, uint32_t block_num);
 void bitmap_write(d_bitmap *bitmap, uint32_t block_num);
-void bitmap_update(uint32_t data_block_num, uint8_t type);
+void bitmap_update(uint32_t data_block_num, uint32_t type);
 void data_read(void *data, uint32_t block_num);
 void data_write(void *data, uint32_t block_num);
 void inode_read(inode *node, int32_t inode_block_num);

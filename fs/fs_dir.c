@@ -29,7 +29,6 @@ int fs_mkdir (const char *path, mode_t mode) {
 
 	ptr = strtok(ppath, "/");
 	if(ptr != NULL) {
-		printf("D");
 		cwd = spb.root_directory;
 		while (1){
 			printf("%s\n", ptr);
@@ -45,12 +44,9 @@ int fs_mkdir (const char *path, mode_t mode) {
 	memset((void *)&node, -1, sizeof(inode));
 
 	metadata_init(&node.attr, mode, 4096, inum);
-
-	printf("A");
 	if(search_bitmap(entry_block, 1) < 0){
 		free_inode(inum); return -1;
 	}
-	printf("B");
 	node.direct_ptr[0] = entry_block[0];
 
 	if(cwd == -1)
@@ -58,7 +54,6 @@ int fs_mkdir (const char *path, mode_t mode) {
 
 	else
 		update_dir(&dir_node, cwd, pptr);
-	printf("C\n");
 	memset((void *)&dir_entry, -1, sizeof(dir_block));
 	strcpy(dir_entry.entry[0].name, ".");
 	dir_entry.entry[0].inode_num = inum;
