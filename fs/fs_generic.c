@@ -116,7 +116,11 @@ void fs_destroy (void *private_data) {
 	return;
 }
 void super_init() {
-  	spb.fp = open("a", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
+	int i;
+	char c[PAGESIZE];
+	spb.fp = open("a", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
+	for(i = 0; i < DEVSIZE / PAGESIZE; i++)
+		write(spb.fp, c, PAGESIZE);
   	spb.root_directory = ROOT_DIR;
   	spb.total_block_size = DEVSIZE;
   	spb.d_bitmap_init_bn = D_BITMAP_INIT_BN;
@@ -157,7 +161,6 @@ void free_list_init() {
   	data_write((void *)&ll, d_blk);
   	spb.list_now = i;
   	spb.list_first = d_blk;
-	printf("%d, %d\n", i, d_blk);
 }
 void super_write() {
   	pwrite(spb.fp, (char *)&spb, PAGESIZE, SUPER_INIT_BN);
