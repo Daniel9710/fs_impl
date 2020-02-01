@@ -79,33 +79,26 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #endif
 	char buf[PAGESIZE];
 	super_init();
-	//bitmap_write(spb.cur_bit, spb.cur_bit_bn);
-	memset(buf,0,PAGESIZE);
-    	int p;
-		buf[1] = 5;
-		buf[5] = 6;
-		for(int i = 0; i < 64; i++){
-				for(int j = 0; j < 16; j++) {
-						p = 0;
-						for(int k = 0; k < 8; k++) {
-							p |= buf[i * 16 + j] & (1 << k);
-						}
-						printf("%d ",p);
-				}
-			 printf("\n");
-		}
-
-	//fs_mkdir("/", 0755);
-	buf[12] = 7;
-	printf("%ld\t",pwrite(spb.fp, buf, PAGESIZE, PAGESIZE));
-	buf[2] = 2;
-	printf("%ld\n",pread(spb.fp, buf, PAGESIZE, PAGESIZE));
-	printf("-------------------\n");
+	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
 	for(int i = 0; i < 64; i++){
 			for(int j = 0; j < 16; j++) {
 					p = 0;
 					for(int k = 0; k < 8; k++) {
-						p |= buf[i * 16 + j] & (1 << k);
+						p |= spb.cur_bit->bit_set[i * 16 + j] & (1 << k);
+					}
+					printf("%d ",p);
+			}
+		 printf("\n");
+	}
+
+
+	fs_mkdir("/", 0755);
+	
+	for(int i = 0; i < 64; i++){
+			for(int j = 0; j < 16; j++) {
+					p = 0;
+					for(int k = 0; k < 8; k++) {
+						p |= spb.cur_bit->bit_set[i * 16 + j] & (1 << k);
 					}
 					printf("%d ",p);
 			}
@@ -123,10 +116,7 @@ void fs_destroy (void *private_data) {
 	return;
 }
 void super_init() {
-	int i;
-	char c[PAGESIZE];
 	spb.fp = open("a", O_RDWR | O_CREAT | O_TRUNC | O_LARGEFILE, 0644);
-	printf("fp : %d\n", spb.fp);
   	spb.root_directory = ROOT_DIR;
   	spb.total_block_size = DEVSIZE;
   	spb.d_bitmap_init_bn = D_BITMAP_INIT_BN;
@@ -179,11 +169,11 @@ void super_read() {
 }
 
 void bitmap_read(d_bitmap *bitmap, uint32_t block_num) {
-  	pread(spb.fp, (void *)bitmap,  PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
+  	pread(spb.fp, (char *)bitmap,  PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
 }
 
 void bitmap_write(d_bitmap *bitmap, uint32_t block_num) {
-  	pwrite(spb.fp, (void *)bitmap, PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
+  	pwrite(spb.fp, (char *)bitmap, PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
 }
 
 void bitmap_update(uint32_t data_block_num, uint8_t type) {
