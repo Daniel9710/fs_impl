@@ -93,7 +93,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 
 
 	fs_mkdir("/", 0755);
-	
+
 	for(int i = 0; i < 64; i++){
 			for(int j = 0; j < 16; j++) {
 					p = 0;
@@ -153,11 +153,11 @@ void free_list_init() {
   	}
   	for(i = node_num; i >= 0 && i_num >= 0; --i)
     	ll.free_node[i] = i_num--;
+	spb.list_now = i + 1;
 	for(;i >= 0;--i)
 		ll.free_node[i] = -1;
   	bitmap_update(d_blk, VALID);
   	data_write((void *)&ll, d_blk);
-  	spb.list_now = i;
   	spb.list_first = d_blk;
 }
 void super_write() {
@@ -266,6 +266,7 @@ int new_inode(){
     	spb.list_now = 0;
     	data_read((void *)&ll, blk_num);
   	}
+	printf("%d\n",spb.list_now);
   	return ll.free_node[spb.list_now++];
 }
 
