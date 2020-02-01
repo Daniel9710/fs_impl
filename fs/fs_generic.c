@@ -77,27 +77,32 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 	monitor_init(&global_monitor);
 #endif
 
-  super_init();
-  /*
-  int p;
-  for(int i = 0; i < 64; i++){
-    for(int j = 0; j < 4; j++) {
-      p = 0;
-      for(int k = 0; k < 8; k++) {
-        p |= spb.cur_bit->bitset[i * 16 + j *4] & (1 << k);
-      }
-      printf("%d",p);
-    }
-    printf("\n");
-  }
+super_init();
 
-  bitmap_read(spb.cur_bit, 0);
-  bitmap_update(3, VALID);
-*/
-  int arr[3];
-  printf("result : %d\n", search_bitmap(arr, 3));
-  printf("%d %d %d\n", arr[0], arr[1], arr[2]);
-	fs_mkdir("a/b/c/d/e/f/g", 0755);
+    int p;
+    for(int i = 0; i < 64; i++){
+          for(int j = 0; j < 4; j++) {
+                p = 0;
+                for(int k = 0; k < 8; k++) {
+                    p |= spb.cur_bit->bitset[i * 16 + j *4] & (1 << k);
+                }
+                printf("%d",p);
+          }
+          printf("\n");
+    }
+
+	fs_mkdir("/", 0755);
+
+    for(int i = 0; i < 64; i++){
+          for(int j = 0; j < 4; j++) {
+                p = 0;
+                for(int k = 0; k < 8; k++) {
+                    p |= spb.cur_bit->bitset[i * 16 + j *4] & (1 << k);
+                }
+                printf("%d",p);
+          }
+          printf("\n");
+    }
 
 	return NULL;
 }

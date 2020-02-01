@@ -35,7 +35,7 @@ int fs_mkdir (const char *path, mode_t mode) {
 			inode_read(&dir_node, cwd);
 			pptr = ptr;
 	  		ptr = strtok(NULL, "/");
-			if(ptr!= NULL)
+			if(ptr== NULL)
 				break;
 			cwd = search_dir(&dir_node, pptr);
 		}
