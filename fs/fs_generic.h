@@ -33,6 +33,6 @@ int new_inode();
 void free_inode(int block_num);
 void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino);
 int search_dir(inode *node, char *ptr);
-void update_dir(inode *node, int inum, char *ptr);
+int update_dir(inode *node, int inum, char *ptr);
 void update_direntry(dir_block *dir, int inum, char *ptr, int idx, int blk);
 #endif

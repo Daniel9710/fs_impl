@@ -284,8 +284,8 @@ void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino
 
 	meta->mode = mode;
 	meta->nlink = 2;
-	meta->uid = fs_cxt.uid;
-	meta->gid = fs_cxt.gid;
+	meta->uid = fs_cxt->uid;
+	meta->gid = fs_cxt->gid;
 	meta->size = size;
 	meta->atime = t;
 	meta->ctime = t;
