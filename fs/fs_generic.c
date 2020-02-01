@@ -157,6 +157,7 @@ void free_list_init() {
   	data_write((void *)&ll, d_blk);
   	spb.list_now = i;
   	spb.list_first = d_blk;
+	printf("%d, %d\n", i, d_blk);
 }
 void super_write() {
   	pwrite(spb.fp, (char *)&spb, PAGESIZE, SUPER_INIT_BN);
