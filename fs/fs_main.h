@@ -40,7 +40,7 @@
 typedef struct superblock {
 	int fp;
 	uint32_t root_directory;
-	long total_block_size;
+	uint64_t total_block_size;
 	uint32_t d_bitmap_init_bn;
 	uint32_t inode_init_bn;
 	uint32_t list_first;
