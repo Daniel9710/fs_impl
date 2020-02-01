@@ -177,11 +177,11 @@ void super_read() {
 }
 
 void bitmap_read(d_bitmap *bitmap, uint32_t block_num) {
-  	pread(spb.fp, (char *)bitmap,  PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
+  	pread(spb.fp, (void *)bitmap,  PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
 }
 
 void bitmap_write(d_bitmap *bitmap, uint32_t block_num) {
-  	pwrite(spb.fp, (char *)bitmap, PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
+  	pwrite(spb.fp, (void *)bitmap, PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
 }
 
 void bitmap_update(uint32_t data_block_num, uint8_t type) {
