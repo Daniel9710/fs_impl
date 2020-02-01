@@ -18,26 +18,51 @@ int fs_opendir (const char *path, struct fuse_file_info *fi) {
 }
 
 int fs_mkdir (const char *path, mode_t mode) {
-	char ppath[60], *ptr;
-	uint32_t parent, child, inum;
-	inode node;
-	time_t t = time(NULL);
-	struct fuse_context *fs_cxt = (struct fuse_context *)malloc(sizeof(struct fuse_context));
-	fs_cxt = fuse_get_context();
-	parent = child = spb.root_directory;
+	char ppath[60], *pptr, *ptr;
+	int32_t cwd, inum, entry_block[0];
+	inode node, dir_node;
+	dir_block dir_entry;
+
+	cwd = -1;
 	strcpy(ppath, path);
 	printf("%s\n",ppath);
 
 	ptr = strtok(ppath, "/");
-	while (ptr != NULL){
-		printf("%s\n", ptr);
-	  ptr = strtok(NULL, "/");
+	if(ptr != NULL) {
+		cwd = spb.root_directory;
+		while (1){
+			printf("%s\n", ptr);
+			inode_read(&dir_node, cwd);
+			pptr = ptr;
+	  		ptr = strtok(NULL, "/");
+			if(ptr!= NULL)
+				break;
+			cwd = search_dir(&dir_node, pptr);
+		}
 	}
-	if(parent == child) {
-		inum = new_inode();
-		metadata_init(&node.attr, mode, 4096, inum);
-		
+	inum = new_inode();
+	memset((void *)&node, -1, sizeof(inode));
+
+	metadata_init(&node.attr, mode, 4096, inum);
+
+	if(search_bitmap(entry_block, 1) < 0){
+		free_inode(inum); return -1;
 	}
+	node.direct_ptr[0] = entry_block[0];
+
+	if(cwd == -1)
+		spb.root_directory = inum;
+
+	else
+		update_dir(&dir_node, cwd, pptr);
+
+	memset((void *)&dir_entry, -1, sizeof(dir_block));
+	strcpy(dir_entry.entry[0].name, ".");
+	dir_entry.entry[0].inode_num = inum;
+	strcpy(dir_entry.entry[1].name, "..");
+	dir_entry.entry[1].inode_num = cwd;
+	data_write((void *)&dir_entry, node.direct_ptr[0]);
+	inode_write(&node, inum);
 	return 0;
 }
 

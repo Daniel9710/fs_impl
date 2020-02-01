@@ -280,10 +280,10 @@ void free_inode(int block_num){
 }
 void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino) {
 	time_t t = time(NULL);
-	struct fuse_context fs_cxt = *fuse_get_context();
+	struct fuse_context *fs_cxt = fuse_get_context();
 
 	meta->mode = mode;
-	meta->nlink = 1;
+	meta->nlink = 2;
 	meta->uid = fs_cxt.uid;
 	meta->gid = fs_cxt.gid;
 	meta->size = size;
@@ -291,4 +291,52 @@ void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino
 	meta->ctime = t;
 	meta->mtime = t;
 	meta->ino = ino;
+}
+int search_dir(inode *node, char *ptr) {
+    int i, j, k, l;
+    dir_block dir;
+    indirect_ptr in_ptr;
+    for(i = 0; i < DIRECT_PTR; i++){
+        if(node->direct_ptr[i] != -1) {
+            data_read((void *)&dir, node->direct_ptr[i]);
+            for(j = 0; j < DIRPERPAGE; j++) {
+                if(strcmp(dir.entry[j].name, ptr) == 0)
+                    return i * DIRPERPAGE + j;
+            }
+        }
+    }
+
+    return -1;
+}
+int update_dir(inode *node, int inum, char *ptr) {
+    int i, j, k, l,arr[3];
+    dir_block dir;
+    indirect_ptr in_ptr;
+    for(i = 0; i < DIRECT_PTR; i++){
+        if(node->direct_ptr[i] != -1) {
+            data_read((void *)&dir, node->direct_ptr[i]);
+            for(j = 0; j < DIRPERPAGE; j++) {
+                if(dir.entry[j].inode_num == -1) {
+                    dir.entry[j].inode_num = inum;
+                    strcpy(dir.entry[j].name, ptr);
+                    return 0;
+                }
+            }
+        }
+        else {
+            if(search_bitmap(arr, 1) < 0)
+                return -1;
+            node->direct_ptr[i] = arr[0];
+            inode_write(node, node->attr.ino);
+            memset((void *)&dir, -1, sizeof(dir_block));
+            update_direntry(&dir, inum, ptr, 0, arr[0]);
+            return 0;
+        }
+    }
+    return -1;
+}
+void update_direntry(dir_block *dir, int inum, char *ptr, int idx, int blk) {
+    strcpy(dir.entry[idx].name, ptr);
+    dir.entry[idx].inode_num = inum;
+    data_write((void *)&dir, blk);
 }
