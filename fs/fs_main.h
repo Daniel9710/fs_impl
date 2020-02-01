@@ -74,7 +74,7 @@ typedef struct entry_dir {
 }entry_dir;
 typedef struct dir_block {
 	entry_dir entry[DIRPERPAGE];
-}
+}dir_block;
 typedef struct d_bitmap {
 	uint8_t bitset[PAGESIZE];
 }d_bitmap;
