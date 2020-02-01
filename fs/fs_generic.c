@@ -219,18 +219,18 @@ void inode_write(inode *node, uint32_t inode_block_num) {
 
 int search_bitmap(int *arr, int num)
 {
-	d_bitmap bitmap;
-	int a, b, c, bound = 0, i = 0;
+    d_bitmap bitmap;
+    int a, b, c, bound = 0, i = 0;
 	int **new_arr = (int **)malloc(sizeof(int *) * num);
 	for (a = 0; a < num; a++)
 		new_arr[a] = (int *)malloc(sizeof(int) * 3);
-  bitmap_write(spb.cur_bit, spb.cur_bit_bn);
+    bitmap_write(spb.cur_bit, spb.cur_bit_bn);
 	for (c = 0; c < D_BITMAP_NUM; c++) {
 		bitmap_read(&bitmap, c);
 		for (a = 0; a < PAGESIZE; a++) {
 			for (b = 0; b < 8; b++) {
 				if (bound >= spb.total_d_blocks){
-          printf("ERROR : NO SUFFICIENT BLOCK\n");
+          			printf("ERROR : NO SUFFICIENT BLOCK\n");
 					return -1;
 				}
 				if (BIT_CHECK(bitmap.bitset[a], b) == 0) {
@@ -239,8 +239,8 @@ int search_bitmap(int *arr, int num)
 					new_arr[i][2] = b;
 					arr[i] = bound;
 					if (++i >= num) {
-            for (i = num - 1; i > 0; i--)
-              bitmap_update(new_arr[i][0] * PAGESIZE + new_arr[i][1] * 8 + new_arr[i][2], VALID);
+            			for (i = num - 1; i > 0; i--)
+                			bitmap_update(new_arr[i][0] * PAGESIZE + new_arr[i][1] * 8 + new_arr[i][2], VALID);
 						return 0;
 					}
 				}
@@ -248,40 +248,40 @@ int search_bitmap(int *arr, int num)
 			}
 		}
 	}
-  printf("ERROR : NO SUFFICIENT BLOCK\n");
-	return -1;
+	printf("ERROR : NO SUFFICIENT BLOCK\n");
+  	return -1;
 }
 
 int new_inode(){
-  int blk_num = spb.list_first;
-  free_list ll;
-  if(spb.free_inode == 0)
-    return -1;
-  data_read((void *)&ll, blk_num);
-  if(spb.list_now == ENTRYPERPAGE - 1) {
-    bitmap_update(blk_num, INVALID);
-    spb.list_first = ll.next;
-    spb.list_now = 0;
-    data_read((void *)&ll, blk_num);
-  }
-  return ll.free_node[spb.list_now++];
+  	int blk_num = spb.list_first;
+  	free_list ll;
+ 	if(spb.free_inode == 0)
+	    return -1;
+  	data_read((void *)&ll, blk_num);
+  	if(spb.list_now == ENTRYPERPAGE - 1) {
+    	bitmap_update(blk_num, INVALID);
+    	spb.list_first = ll.next;
+    	spb.list_now = 0;
+    	data_read((void *)&ll, blk_num);
+  	}
+  	return ll.free_node[spb.list_now++];
 }
 
 void free_inode(int block_num){
-  int arr[1];
-  free_list *ll = (free_list *)calloc(1, sizeof(free_list));
-  if(spb.list_now == 0) {
-    search_bitmap(arr, 1);
-    ll->next = spb.list_first;
-    spb.list_first = arr[0];
-    spb.list_now = ENTRYPERPAGE - 2;
-    ll->free_node[spb.list_now] = block_num;
-  }
-  else {
-    data_read((void *)ll, spb.list_first);
-    ll->free_node[--spb.list_now] = block_num;
-  }
-  data_write((void *)ll, spb.list_first);
+  	int arr[1];
+  	free_list *ll = (free_list *)calloc(1, sizeof(free_list));
+  	if(spb.list_now == 0) {
+    	search_bitmap(arr, 1);
+    	ll->next = spb.list_first;
+		spb.list_first = arr[0];
+    	spb.list_now = ENTRYPERPAGE - 2;
+    	ll->free_node[spb.list_now] = block_num;
+  	}
+  	else {
+    	data_read((void *)ll, spb.list_first);
+    	ll->free_node[--spb.list_now] = block_num;
+  	}
+  	data_write((void *)ll, spb.list_first);
 }
 void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino) {
 	time_t t = time(NULL);
