@@ -25,8 +25,27 @@ struct monitor *global_monitor;
 struct superblock spb;
 
 int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
-	if(fi)
-		printf("DD");
+	inode dir_node;
+	char ppath[60];
+	printf("\n%d\n\n",stbuf->st_ino);
+	int cwd = inode_trace(path, &dir_node, ppath);
+	if(cwd == -1)
+		cwd = spb.root_directory;
+	else {
+		if((cwd = search_dir(&dir_node, ppath) == -1)
+			return -ENOENT;
+	}
+	inode_read(&dir_node, cwd);
+	stbuf->st_ino = cwd;
+	stbuf->st_mode = dir_node.attr.mode;
+	stbuf->nlink = dir_node.attr.nlink;
+	stbuf->st_uid = dir_node.attr.uid;
+	stbuf->st_gid = dir_node.attr.gid;
+	stbuf->st_size = dir_node.attr.size;
+	stbuf->st_blksize = PAGESIZE;
+	stbuf->st_atime = dir_node.attr.atime;
+	stbuf->st_mtime = dir_node.attr.mtime;
+	stbuf->st_ctime = dir_node.attr.ctime;
 
     return 0;
 }
@@ -283,9 +302,10 @@ void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino
 	meta->mtime = t;
 	meta->ino = ino;
 }
-int inode_trace(const char *path, inode *dir_node, char *pptr) {
+int inode_trace(const char *path, inode *node, char *pptr) {
 	char ppath[100], *ptr;
 	int32_t cwd = -1;
+	inode dir_node;
 	strcpy(ppath, path);
 	printf("%s\n",ppath);
 
@@ -294,14 +314,16 @@ int inode_trace(const char *path, inode *dir_node, char *pptr) {
 		cwd = spb.root_directory;
 		while (1){
 			printf("%s\n", ptr);
-			inode_read(dir_node, cwd);
+			inode_read(&dir_node, cwd);
 			pptr = ptr;
 	  		ptr = strtok(NULL, "/");
 			if(ptr== NULL)
 				break;
-			cwd = search_dir(dir_node, pptr);
+			cwd = search_dir(&dir_node, pptr);
 		}
 	}
+	*node = dir_node;
+	return cwd;
 }
 
 int search_dir(inode *node, char *ptr) {
@@ -315,8 +337,9 @@ int search_dir(inode *node, char *ptr) {
                     return i * DIRPERPAGE + j;
             }
         }
+		else
+			return -1;
     }
-
     return -1;
 }
 int update_dir(inode *node, int inum, char *ptr) {
