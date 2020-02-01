@@ -93,11 +93,12 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 
 	//fs_mkdir("/", 0755);
 	spb.cur_bit->bitset[0] = 5;
-	spb.cur_bit->bitset[3] = 5;
+	spb.cur_bit->bitset[3] = 6;
 	pwrite(spb.fp, (void *)spb.cur_bit,  PAGESIZE, (spb.cur_bit_bn + D_BITMAP_INIT_BN) * PAGESIZE);
 	spb.cur_bit->bitset[5] = 2;
 	pread(spb.fp, (void *)spb.cur_bit,  PAGESIZE, (spb.cur_bit_bn + D_BITMAP_INIT_BN) * PAGESIZE);
-    for(int i = 0; i < 64; i++){
+	printf("-------------------");
+	for(int i = 0; i < 64; i++){
           for(int j = 0; j < 4; j++) {
                 p = 0;
                 for(int k = 0; k < 8; k++) {
