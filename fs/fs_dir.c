@@ -19,22 +19,27 @@ int fs_opendir (const char *path, struct fuse_file_info *fi) {
 
 int fs_mkdir (const char *path, mode_t mode) {
 	char ppath[60], *ptr;
-	uint32_t parent, child;
+	uint32_t parent, child, inum;
 	inode node;
+	time_t t = time(NULL);
+	struct fuse_context *fs_cxt = fuse_get_context();
+	printf("%d\n\n", fs_cxt->uid);
 	parent = child = spb.root_directory;
 	strcpy(ppath, path);
 	printf("%s\n",ppath);
-	printf("start\n");
+
 	ptr = strtok(ppath, "/");
 	while (ptr != NULL){
 		printf("%s\n", ptr);
 	  ptr = strtok(NULL, "/");
 	}
-	printf("finish\n");
-	/*
 	if(parent == child) {
-
-	}*/
+		inum = new_inode();
+		node.attr.mode = mode;
+		node.attr.nlink = 1;
+		node.attr.uid = fs_cxt->uid;
+		node.attr.gid = fs_cxt->gid;
+	}
 	return 0;
 }
 

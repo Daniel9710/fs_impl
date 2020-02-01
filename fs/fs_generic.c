@@ -25,6 +25,7 @@ struct superblock spb;
 
 int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
 
+
     return 0;
 }
 
