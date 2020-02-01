@@ -77,8 +77,8 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 	monitor_init(&global_monitor);
 #endif
 
-super_init();
-
+	super_init();
+	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
     int p;
     for(int i = 0; i < 64; i++){
           for(int j = 0; j < 4; j++) {
@@ -86,20 +86,20 @@ super_init();
                 for(int k = 0; k < 8; k++) {
                     p |= spb.cur_bit->bitset[i * 16 + j *4] & (1 << k);
                 }
-                printf("%d",p);
+                printf("%d ",p);
           }
           printf("\n");
     }
 
 	fs_mkdir("/", 0755);
-
+	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
     for(int i = 0; i < 64; i++){
           for(int j = 0; j < 4; j++) {
                 p = 0;
                 for(int k = 0; k < 8; k++) {
                     p |= spb.cur_bit->bitset[i * 16 + j *4] & (1 << k);
                 }
-                printf("%d",p);
+                printf("%d ",p);
           }
           printf("\n");
     }
@@ -116,105 +116,105 @@ void fs_destroy (void *private_data) {
 	return;
 }
 void super_init() {
-  spb.fp = open("a", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
-  spb.root_directory = ROOT_DIR;
-  spb.total_block_size = DEVSIZE;
-  spb.d_bitmap_init_bn = D_BITMAP_INIT_BN;
-  spb.inode_init_bn = INODE_INIT_BN;
-  spb.free_inode = (DATA_INIT_BN - INODE_INIT_BN) * (PAGESIZE / sizeof(struct inode));
-  spb.total_d_blocks = (DEVSIZE / PAGESIZE) - DATA_INIT_BN;
-  bitmap_init();
-  free_list_init();
+  	spb.fp = open("a", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
+  	spb.root_directory = ROOT_DIR;
+  	spb.total_block_size = DEVSIZE;
+  	spb.d_bitmap_init_bn = D_BITMAP_INIT_BN;
+  	spb.inode_init_bn = INODE_INIT_BN;
+  	spb.free_inode = (DATA_INIT_BN - INODE_INIT_BN) * (PAGESIZE / sizeof(struct inode));
+  	spb.total_d_blocks = (DEVSIZE / PAGESIZE) - DATA_INIT_BN;
+  	bitmap_init();
+  	free_list_init();
 
-  super_write();
+  	super_write();
 }
 void bitmap_init() {
 	struct d_bitmap *bit = (struct d_bitmap *)calloc(1, sizeof(struct d_bitmap));
 	int i;
 
 	for (i = D_BITMAP_INIT_BN; i < INODE_INIT_BN; i++)
-    bitmap_write(bit, i);
+    	bitmap_write(bit, i);
 
-  spb.free_d_block = (DEVSIZE / PAGESIZE) - DATA_INIT_BN;
+  	spb.free_d_block = (DEVSIZE / PAGESIZE) - DATA_INIT_BN;
 	spb.cur_bit = bit;
-  spb.cur_bit_bn = 0;
+  	spb.cur_bit_bn = 0;
 }
 
 void free_list_init() {
-  free_list ll;
-  int i, node_num = ENTRYPERPAGE - 2, i_num = spb.free_inode - 2, d_blk = spb.total_d_blocks - 1;
-  ll.next = -1;
-  while(i_num > 1023) {
-    for(i = node_num; i >= 0; --i)
-      ll.free_node[i] = i_num--;
-    bitmap_update(d_blk, VALID);
-    data_write((void *)&ll, d_blk);
-    ll.next = d_blk--;
-  }
-  for(i = node_num; i >= 0 && i_num >= 0; --i)
-    ll.free_node[i] = i_num--;
-  bitmap_update(d_blk, VALID);
-  data_write((void *)&ll, d_blk);
-  spb.list_now = i;
-  spb.list_first = d_blk;
+  	free_list ll;
+  	int i, node_num = ENTRYPERPAGE - 2, i_num = spb.free_inode - 2, d_blk = spb.total_d_blocks - 1;
+  	ll.next = -1;
+  	while(i_num > 1023) {
+    	for(i = node_num; i >= 0; --i)
+      		ll.free_node[i] = i_num--;
+    	bitmap_update(d_blk, VALID);
+    	data_write((void *)&ll, d_blk);
+    	ll.next = d_blk--;
+  	}
+  	for(i = node_num; i >= 0 && i_num >= 0; --i)
+    	ll.free_node[i] = i_num--;
+  	bitmap_update(d_blk, VALID);
+  	data_write((void *)&ll, d_blk);
+  	spb.list_now = i;
+  	spb.list_first = d_blk;
 }
 void super_write() {
-  pwrite(spb.fp, (char *)&spb, PAGESIZE, SUPER_INIT_BN);
+  	pwrite(spb.fp, (char *)&spb, PAGESIZE, SUPER_INIT_BN);
 }
 
 void super_read() {
-  pread(spb.fp, (char *)&spb, PAGESIZE, SUPER_INIT_BN);
+  	pread(spb.fp, (char *)&spb, PAGESIZE, SUPER_INIT_BN);
 }
 
 void bitmap_read(d_bitmap *bitmap, uint32_t block_num) {
-  pread(spb.fp, (char *)bitmap,  PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
+  	pread(spb.fp, (char *)bitmap,  PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
 }
 
 void bitmap_write(d_bitmap *bitmap, uint32_t block_num) {
-  pwrite(spb.fp, (char *)bitmap, PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
+  	pwrite(spb.fp, (char *)bitmap, PAGESIZE, (block_num + D_BITMAP_INIT_BN) * PAGESIZE);
 }
 
 void bitmap_update(uint32_t data_block_num, uint8_t type) {
-  uint32_t block_num = GET_BLOCKNUM(data_block_num , (PAGESIZE * 8));
-  uint32_t bit_idx = GET_BITIDX(data_block_num, (PAGESIZE * 8));
-  if(block_num != spb.cur_bit_bn) {
-    bitmap_write(spb.cur_bit, spb.cur_bit_bn);
-    bitmap_read(spb.cur_bit, block_num);
-    spb.cur_bit_bn = block_num;
-  }
-  if(type == VALID) {
-    BIT_SET(spb.cur_bit->bitset[bit_idx / 8], (1 << (bit_idx % 8)));
-    spb.free_d_block--;
-  }
-  else {
-    BIT_CLEAR(spb.cur_bit->bitset[bit_idx / 8], (1 << (bit_idx % 8)));
-    spb.free_d_block++;
-  }
+  	uint32_t block_num = GET_BLOCKNUM(data_block_num , (PAGESIZE * 8));
+  	uint32_t bit_idx = GET_BITIDX(data_block_num, (PAGESIZE * 8));
+  	if(block_num != spb.cur_bit_bn) {
+    	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
+    	bitmap_read(spb.cur_bit, block_num);
+    	spb.cur_bit_bn = block_num;
+  	}
+  	if(type == VALID) {
+    	BIT_SET(spb.cur_bit->bitset[bit_idx / 8], (1 << (bit_idx % 8)));
+    	spb.free_d_block--;
+  	}
+  	else {
+    	BIT_CLEAR(spb.cur_bit->bitset[bit_idx / 8], (1 << (bit_idx % 8)));
+    	spb.free_d_block++;
+  	}
 }
 
 void data_read(void *data, uint32_t block_num) {
-  pread(spb.fp, (char *)data, PAGESIZE, (block_num + DATA_INIT_BN) * PAGESIZE);
+  	pread(spb.fp, (char *)data, PAGESIZE, (block_num + DATA_INIT_BN) * PAGESIZE);
 }
 
 void data_write(void *data, uint32_t block_num) {
-  pwrite(spb.fp, (char *)data, PAGESIZE, (block_num + DATA_INIT_BN) * PAGESIZE);
+  	pwrite(spb.fp, (char *)data, PAGESIZE, (block_num + DATA_INIT_BN) * PAGESIZE);
 }
 
 void inode_read(inode *node, int32_t inode_block_num) {
-  uint32_t block_num = GET_BLOCKNUM(inode_block_num, INODEPERPAGE);
-  uint32_t bit_idx = GET_BITIDX(inode_block_num, INODEPERPAGE);
-  i_block blk;
-  pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
-  *node = blk.i[bit_idx];
+  	uint32_t block_num = GET_BLOCKNUM(inode_block_num, INODEPERPAGE);
+  	uint32_t bit_idx = GET_BITIDX(inode_block_num, INODEPERPAGE);
+  	i_block blk;
+  	pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
+  	*node = blk.i[bit_idx];
 }
 
 void inode_write(inode *node, uint32_t inode_block_num) {
-  uint32_t block_num = GET_BLOCKNUM(inode_block_num, INODEPERPAGE);
-  uint32_t bit_idx = GET_BITIDX(inode_block_num, INODEPERPAGE);
-  i_block blk;
-  pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
-  blk.i[bit_idx] = *node;
-  pwrite(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
+  	uint32_t block_num = GET_BLOCKNUM(inode_block_num, INODEPERPAGE);
+  	uint32_t bit_idx = GET_BITIDX(inode_block_num, INODEPERPAGE);
+  	i_block blk;
+  	pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
+  	blk.i[bit_idx] = *node;
+  	pwrite(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
 }
 
 int search_bitmap(int *arr, int num)

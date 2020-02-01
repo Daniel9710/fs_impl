@@ -58,7 +58,7 @@ int fs_mkdir (const char *path, mode_t mode) {
 
 	else
 		update_dir(&dir_node, cwd, pptr);
-	printf("C");
+	printf("C\n");
 	memset((void *)&dir_entry, -1, sizeof(dir_block));
 	strcpy(dir_entry.entry[0].name, ".");
 	dir_entry.entry[0].inode_num = inum;
