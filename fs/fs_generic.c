@@ -79,39 +79,38 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 #endif
 	char buf[PAGESIZE];
 	super_init();
-	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
+	//bitmap_write(spb.cur_bit, spb.cur_bit_bn);
 	memset(buf,0,PAGESIZE);
     	int p;
-    	for(int i = 0; i < 64; i++){
-    	      	for(int j = 0; j < 4; j++) {
-    	            	p = 0;
-            	    	for(int k = 0; k < 8; k++) {
-               			p |= buf[i * 16 + j * 4] & (1 << k);
-                	}
-                	printf("%d ",p);
-          	}
-         	 printf("\n");
-    	}
+		for(int i = 0; i < 64; i++){
+				for(int j = 0; j < 4; j++) {
+						p = 0;
+						for(int k = 0; k < 8; k++) {
+							p |= buf[i * 16 + j * 4] & (1 << k);
+						}
+						printf("%d ",p);
+				}
+			 printf("\n");
+		}
 
 	//fs_mkdir("/", 0755);
 	buf[1] = 5;
-	buf[3] = 6;
-	printf("%ld\n", lseek(spb.fp, PAGESIZE,SEEK_SET));
-	printf("%ld\t",write(spb.fp, buf,  PAGESIZE));
+	buf[5] = 6;
+	printf("fp : %d\n", spb.fp);
+	printf("%ld\t",pwrite(spb.fp, buf, PAGESIZE, PAGESIZE));
 	buf[2] = 2;
-	printf("%ld\n", lseek(spb.fp, PAGESIZE, SEEK_SET));
-	printf("%ld\n",read(spb.fp, buf,  PAGESIZE));
+	printf("%ld\n",pread(spb.fp, buf, PAGESIZE, PAGESIZE));
 	printf("-------------------\n");
 	for(int i = 0; i < 64; i++){
-          for(int j = 0; j < 4; j++) {
-                p = 0;
-                for(int k = 0; k < 8; k++) {
-                    p |= buf[i * 16 + j *4] & (1 << k);
-                }
-                printf("%d ",p);
-          }
-          printf("\n");
-    }
+			for(int j = 0; j < 4; j++) {
+					p = 0;
+					for(int k = 0; k < 8; k++) {
+						p |= buf[i * 16 + j * 4] & (1 << k);
+					}
+					printf("%d ",p);
+			}
+		 printf("\n");
+	}
 	return NULL;
 }
 
@@ -127,9 +126,7 @@ void super_init() {
 	int i;
 	char c[PAGESIZE];
 	spb.fp = open("a", O_RDWR | O_CREAT | O_TRUNC | O_LARGEFILE, 0644);
-	for(i = 0; i < DEVSIZE / PAGESIZE; i++)
-		write(spb.fp, c, PAGESIZE);
-	lseek(spb.fp, 0, SEEK_SET);
+	printf("fp : %d\n", spb.fp);
   	spb.root_directory = ROOT_DIR;
   	spb.total_block_size = DEVSIZE;
   	spb.d_bitmap_init_bn = D_BITMAP_INIT_BN;
