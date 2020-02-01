@@ -88,7 +88,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 				for(int j = 0; j < 4; j++) {
 						p = 0;
 						for(int k = 0; k < 8; k++) {
-							p |= buf[i * 16 + j * 4] & (1 << k);
+							p |= buf[i * 16 + j] & (1 << k);
 						}
 						printf("%d ",p);
 				}
@@ -105,7 +105,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 			for(int j = 0; j < 4; j++) {
 					p = 0;
 					for(int k = 0; k < 8; k++) {
-						p |= buf[i * 16 + j * 4] & (1 << k);
+						p |= buf[i * 16 + j] & (1 << k);
 					}
 					printf("%d ",p);
 			}
