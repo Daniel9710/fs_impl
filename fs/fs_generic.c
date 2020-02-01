@@ -336,7 +336,7 @@ int update_dir(inode *node, int inum, char *ptr) {
     return -1;
 }
 void update_direntry(dir_block *dir, int inum, char *ptr, int idx, int blk) {
-    strcpy(dir.entry[idx].name, ptr);
-    dir.entry[idx].inode_num = inum;
-    data_write((void *)&dir, blk);
+    strcpy(dir->entry[idx].name, ptr);
+    dir->entry[idx].inode_num = inum;
+    data_write((void *)dir, blk);
 }
