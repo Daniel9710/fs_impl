@@ -32,7 +32,10 @@ int search_bitmap(int *arr, int num);
 int new_inode();
 void free_inode(int block_num);
 void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino);
+int inode_trace(const char *path, inode *dir_node);
 int search_dir(inode *node, char *ptr);
 int update_dir(inode *node, int inum, char *ptr);
 void update_direntry(dir_block *dir, int inum, char *ptr, int idx, int blk);
+void cur_bit_test();
+
 #endif

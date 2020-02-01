@@ -283,6 +283,27 @@ void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino
 	meta->mtime = t;
 	meta->ino = ino;
 }
+int inode_trace(const char *path, inode *dir_node, char *pptr) {
+	char ppath[100], *ptr;
+	int32_t cwd = -1;
+	strcpy(ppath, path);
+	printf("%s\n",ppath);
+
+	ptr = strtok(ppath, "/");
+	if(ptr != NULL) {
+		cwd = spb.root_directory;
+		while (1){
+			printf("%s\n", ptr);
+			inode_read(dir_node, cwd);
+			pptr = ptr;
+	  		ptr = strtok(NULL, "/");
+			if(ptr== NULL)
+				break;
+			cwd = search_dir(dir_node, pptr);
+		}
+	}
+}
+
 int search_dir(inode *node, char *ptr) {
     int i, j;
     dir_block dir;

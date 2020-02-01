@@ -18,28 +18,13 @@ int fs_opendir (const char *path, struct fuse_file_info *fi) {
 }
 
 int fs_mkdir (const char *path, mode_t mode) {
-	char ppath[60], *pptr, *ptr;
+	char ppath[60];
 	int32_t cwd, inum, entry_block[0];
 	inode node, dir_node;
 	dir_block dir_entry;
 
-	cwd = -1;
-	strcpy(ppath, path);
-	printf("%s\n",ppath);
+	cwd = inode_trace(path, &dir_node, ppath);
 
-	ptr = strtok(ppath, "/");
-	if(ptr != NULL) {
-		cwd = spb.root_directory;
-		while (1){
-			printf("%s\n", ptr);
-			inode_read(&dir_node, cwd);
-			pptr = ptr;
-	  		ptr = strtok(NULL, "/");
-			if(ptr== NULL)
-				break;
-			cwd = search_dir(&dir_node, pptr);
-		}
-	}
 	inum = new_inode();
 	memset((void *)&node, -1, sizeof(inode));
 
