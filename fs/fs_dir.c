@@ -22,8 +22,11 @@ int fs_mkdir (const char *path, mode_t mode) {
 	uint32_t parent, child, inum;
 	inode node;
 	time_t t = time(NULL);
-	struct fuse_context *fs_cxt = fuse_get_context();
-	printf("%d\n\n", fs_cxt->uid);
+	struct fuse_context *fs_cxt = (fuse_context *)malloc(sizeof(fuse_context));
+	fs_cxt = fuse_get_context();
+	printf("\n%d\n", fs_cxt->uid);
+	printf("%d\n", fs_cxt->gid);
+	printf("%d\n", fs_cxt->pid);
 	parent = child = spb.root_directory;
 	strcpy(ppath, path);
 	printf("%s\n",ppath);
