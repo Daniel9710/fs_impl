@@ -27,18 +27,18 @@ struct superblock spb;
 int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
 	inode dir_node;
 	char ppath[60];
-	printf("\n%d\n\n",stbuf->st_ino);
+	printf("\n%ld\n\n",stbuf->st_ino);
 	int cwd = inode_trace(path, &dir_node, ppath);
 	if(cwd == -1)
 		cwd = spb.root_directory;
 	else {
-		if((cwd = search_dir(&dir_node, ppath) == -1)
+		if((cwd = search_dir(&dir_node, ppath)) == -1)
 			return -ENOENT;
 	}
 	inode_read(&dir_node, cwd);
 	stbuf->st_ino = cwd;
 	stbuf->st_mode = dir_node.attr.mode;
-	stbuf->nlink = dir_node.attr.nlink;
+	stbuf->st_nlink = dir_node.attr.nlink;
 	stbuf->st_uid = dir_node.attr.uid;
 	stbuf->st_gid = dir_node.attr.gid;
 	stbuf->st_size = dir_node.attr.size;
