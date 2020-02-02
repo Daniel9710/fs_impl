@@ -164,12 +164,32 @@ int update_dir(inode *node, int inum, const char *ptr, int type) {
     }
     return -1;
 }
+int rename_dir(inode *node, int inum, char *ptr) {
+	int i, j;
+    dir_block dir;
+    for(i = 0; i < DIRECT_PTR; i++){
+        if(node->direct_ptr[i] != -1) {
+            data_read((void *)&dir, node->direct_ptr[i]);
+            for(j = 0; j < DIRPERPAGE; j++) {
+                if(dir.entry[j].inode_num == inum) {
+					strcpy(dir.entry[j].name, ptr);
+					data_write((void *)&dir, node->direct_ptr[i]);
+                    return 0;
+                }
+            }
+        }
+        else
+			return -1;
+    }
+    return -1;
+}
 void update_direntry(dir_block *dir, int inum, const char *ptr, int idx, int blk, int type) {
     strcpy(dir->entry[idx].name, ptr);
     dir->entry[idx].inode_num = inum;
     dir->entry[idx].type = type;
     data_write((void *)dir, blk);
 }
+
 int delete_dir(inode *node, int inum){
 	int i, j;
 	dir_block dir;

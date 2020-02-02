@@ -110,6 +110,8 @@ int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
 		return -ENOENT;
 	if((newcwd = inode_trace(newpath, &dir_newnode, newppath)) == -1)
 		return -EACCES;
+	else if(newcwd == -2)
+		return -ENOENT;
 	else if((newinum = search_dir(&dir_newnode, newppath)) != -1) {
 		inode_read(&oldnode, oldinum);
 		inode_read(&newnode, newinum);
@@ -126,19 +128,24 @@ int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
 		}
 		remove_file(&newnode);
 		free_inode(newinum);
-
 	}
 	else
 		inode_read(&oldnode, oldinum);
 
-	delete_dir(&dir_oldnode, oldinum);
-	update_dir(&dir_newnode, oldinum, oldppath, oldnode.attr.mode & 0770000);
-	if(oldnode.attr.mode & S_IFDIR) {
-		dir_oldnode.attr.nlink--;
-		dir_newnode.attr.nlink++;
+	if(dir_oldnode.attr.ino == dir_newnode.attr.ino) 
+			rename_dir(&dir_newnode, oldinum, newppath);
+
+	else {
+		delete_dir(&dir_oldnode, oldinum);
+		update_dir(&dir_newnode, oldinum, newppath, oldnode.attr.mode & 0770000);
+		if(oldnode.attr.mode & S_IFDIR) {
+			dir_oldnode.attr.nlink--;
+			dir_newnode.attr.nlink++;
+		}
+		dir_oldnode.attr.mtime = dir_oldnode.attr.ctime = time(NULL);
+		inode_write(&dir_oldnode, oldcwd);
 	}
-	dir_oldnode.attr.mtime = dir_oldnode.attr.ctime = dir_newnode.attr.mtime = dir_newnode.attr.ctime = time(NULL);
-	inode_write(&dir_oldnode, oldcwd);
+	dir_newnode.attr.mtime = dir_newnode.attr.ctime = time(NULL);
 	inode_write(&dir_newnode, newcwd);
 
     return 0;
