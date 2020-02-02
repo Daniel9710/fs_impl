@@ -155,14 +155,47 @@ int fs_access (const char *path, int mask) {
 	inode node;
 	char ppath[56];
 	int cwd = inode_trace(path, &node, ppath);
+	struct metadata mm;
+	struct fuse_context *fs_cxt = fuse_get_context();
 	if(cwd == -1)
 		cwd = spb.root_directory;
 	else {
 		cwd = search_dir(&node, ppath);
-		if(cwd == -1)
-			return -ENOENT;
 	}
-
+	inode_read(&node, cwd);
+	mm = node.attr;
+	if(mask == F_OK)
+		return 0;
+	else if (mask == R_OK) {
+		if((mm.mode & S_IRUSR) && (mm.uid == fs_cxt->uid))
+			return 0;
+		else if((mm.mode & S_IRGRP) && (mm.gid == fs_cxt->gid))
+			return 0;
+		else if(mm.mode & S_IROTH)
+			return 0;
+		else
+			return -1;
+	}
+	else if (mask == W_OK) {
+		if((mm.mode & S_IWUSR) && (mm.uid == fs_cxt->uid))
+			return 0;
+		else if((mm.mode & S_IWGRP) && (mm.gid == fs_cxt->gid))
+			return 0;
+		else if(mm.mode & S_IWOTH)
+			return 0;
+		else
+			return -1;
+	}
+	else if (mask == X_OK) {
+		if((mm.mode & S_IXUSR) && (mm.uid == fs_cxt->uid))
+			return 0;
+		else if((mm.mode & S_IXGRP) && (mm.gid == fs_cxt->gid))
+			return 0;
+		else if(mm.mode & S_IXOTH)
+			return 0;
+		else
+			return -1;
+	}
 	return 0;
 }
 
@@ -181,7 +214,7 @@ int fs_symlink (const char *from, const char *to) {
 	tocwd = inode_trace(to, &dir_tonode, toppath);
 	toinum = new_inode();
 	memset(&tonode, -1, sizeof(inode));
-	metadata_init(&tonode.attr, (fromnode.attr.mode & ~(0770000))|S_IFLNK, strlen(from) + 1, toinum);
+	metadata_init(&tonode.attr, (fromnode.attr.mode & ~(0770000))|S_IFLNK, 1, strlen(from) + 1, toinum);
 	memcpy(&(tonode.direct_ptr), from, strlen(from) + 1);
 
 	update_dir(&dir_tonode, toinum, toppath, S_IFLNK);
@@ -432,12 +465,12 @@ int inode_trace(const char *path, inode *node, char *file) {
 	return cwd;
 }
 
-void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino) {
+void metadata_init(struct metadata *meta, mode_t mode, int link, size_t size, uint64_t ino) {
 	time_t t = time(NULL);
 	struct fuse_context *fs_cxt = fuse_get_context();
 
 	meta->mode = mode;
-	meta->nlink = 2;
+	meta->nlink = link;
 	meta->uid = fs_cxt->uid;
 	meta->gid = fs_cxt->gid;
 	meta->size = size;
