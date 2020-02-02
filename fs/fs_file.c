@@ -9,6 +9,7 @@
 #include "metadata.h"
 #include "fs_main.h"
 #include "fs_generic.h"
+#include "fs_dir.h"
 
 extern struct monitor *global_monitor;
 extern struct superblock spb;
@@ -18,12 +19,13 @@ int fs_open (const char *path, struct fuse_file_info *fi) {
 	inode node;
 	char ppath[56];
 	int cwd;
+	struct metadata mm;
 	struct fuse_context *fs_cxt = fuse_get_context();
 
 	if((cwd = inode_trace(path, &node, ppath)) == -1)
 		return -EINVAL;
 	fi->fh = search_dir(&node, ppath);
-
+	mm = node.attr;
 	if (fi->flags & O_RDONLY || fi->flags & O_RDWR) {
 		if(!(((mm.mode & S_IRUSR) && (mm.uid == fs_cxt->uid)) || ((mm.mode & S_IRGRP) && (mm.gid == fs_cxt->gid)) || (mm.mode & S_IROTH)))
 			return -1;
@@ -32,10 +34,7 @@ int fs_open (const char *path, struct fuse_file_info *fi) {
 		if(!(((mm.mode & S_IWUSR) && (mm.uid == fs_cxt->uid)) || ((mm.mode & S_IWGRP) && (mm.gid == fs_cxt->gid)) || (mm.mode & S_IWOTH)))
 			return -1;
 	}
-	if (fi->flags & O_EXEC) {
-		if(!(((mm.mode & S_IXUSR) && (mm.uid == fs_cxt->uid)) || ((mm.mode & S_IXGRP) && (mm.gid == fs_cxt->gid)) || (mm.mode & S_IXOTH)))
-			return -1;
-	}
+	
 	return 0;
 }
 
