@@ -181,8 +181,8 @@ int fs_symlink (const char *from, const char *to) {
 	tocwd = inode_trace(to, &dir_tonode, toppath);
 	toinum = new_inode();
 	memset(&tonode, -1, sizeof(inode));
-	metadata_init(&tonode.attr, (fromnode.attr.mode & ~(0770000))|S_IFLNK, strlen(from), toinum);
-	memcpy(&(tonode.direct_ptr), from, strlen(from));
+	metadata_init(&tonode.attr, (fromnode.attr.mode & ~(0770000))|S_IFLNK, strlen(from) + 1, toinum);
+	memcpy(&(tonode.direct_ptr), from, strlen(from) + 1);
 
 	update_dir(&dir_tonode, toinum, toppath, S_IFLNK);
 	dir_tonode.attr.nlink++;
@@ -194,6 +194,16 @@ int fs_symlink (const char *from, const char *to) {
 }
 
 int fs_readlink (const char *path, char *buf, size_t size) {
+	inode node, dir_node;
+	char ppath[56];
+	int cwd,inum;
+
+	if((cwd = inode_trace(path, &dir_node, ppath)) == -1)
+		return -EACCES;
+	inum = search_dir(&dir_node, ppath);
+	inode_read(&node, inum);
+	size = node.attr.size;
+	memcpy(buf, &(node.direct_ptr), size);
 
 	return 0;
 }
