@@ -114,7 +114,6 @@ void fs_destroy (void *private_data) {
 	return;
 }
 void super_init() {
-	memset(buf,0,PAGESIZE);
 	spb.fp = open("a", O_RDWR | O_CREAT | O_TRUNC | O_LARGEFILE, 0644);
   	spb.root_directory = ROOT_DIR;
   	spb.total_block_size = DEVSIZE;
