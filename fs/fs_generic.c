@@ -361,7 +361,7 @@ int update_dir(inode *node, int inum, const char *ptr) {
                 if(dir.entry[j].inode_num == -1) {
                     dir.entry[j].inode_num = inum;
                     strcpy(dir.entry[j].name, ptr);
-					data_write((void *)dir, node->direct_ptr[i]);
+					data_write((void *)&dir, node->direct_ptr[i]);
                     return 0;
                 }
             }
@@ -378,7 +378,7 @@ int update_dir(inode *node, int inum, const char *ptr) {
     }
     return -1;
 }
-void update_direntry(dir_block *dir, int inum, char *ptr, int idx, int blk) {
+void update_direntry(dir_block *dir, int inum, const char *ptr, int idx, int blk) {
     strcpy(dir->entry[idx].name, ptr);
     dir->entry[idx].inode_num = inum;
     data_write((void *)dir, blk);
