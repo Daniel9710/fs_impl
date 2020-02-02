@@ -16,10 +16,10 @@ int fs_opendir (const char *path, struct fuse_file_info *fi) {
 	char ppath[60];
 	inode *dir_node = (inode *)malloc(sizeof(inode));
 
-	if(inode_trace(path, &dir_node, ppath) == -1)
+	if(inode_trace(path, dir_node, ppath) == -1)
 		inode_read(dir_node, spb.root_directory);
 	else
-		inode_read(dir_node, search_dir(&dir_node, ppath));
+		inode_read(dir_node, search_dir(dir_node, ppath));
 	fi->fh = dir_node;
 	return 0;
 }
