@@ -30,7 +30,6 @@ int fs_mkdir (const char *path, mode_t mode) {
 	dir_block dir_entry;
 
 	cwd = inode_trace(path, &dir_node, ppath);
-
 	inum = new_inode();
 	memset(&node, -1, sizeof(inode));
 

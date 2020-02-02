@@ -106,8 +106,8 @@ int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
 
 	if((oldcwd = inode_trace(oldpath, &dir_oldnode, oldppath)) == -1)
 		return -EACCES;
-	if((oldinum = search_dir(&dir_oldnode, oldppath)) == -1)
-		return -ENOENT;
+	oldinum = search_dir(&dir_oldnode, oldppath);
+
 	if((newcwd = inode_trace(newpath, &dir_newnode, newppath)) == -1)
 		return -EACCES;
 	else if(newcwd == -2)
@@ -133,11 +133,9 @@ int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
 		inode_read(&oldnode, oldinum);
 
 	if(dir_oldnode.attr.ino == dir_newnode.attr.ino) {
-			printf("\nsame\n");
 			rename_dir(&dir_newnode, oldinum, newppath);
 	}
 	else {
-		printf("\ndifferent\n");
 		delete_dir(&dir_oldnode, oldinum);
 		update_dir(&dir_newnode, oldinum, newppath, oldnode.attr.mode & 0770000);
 		if(oldnode.attr.mode & S_IFDIR) {
@@ -154,11 +152,43 @@ int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
 }
 
 int fs_access (const char *path, int mask) {
+	inode node;
+	char ppath[56];
+	int cwd = inode_trace(path, &node, ppath);
+	if(cwd == -1)
+		cwd = spb.root_directory;
+	else {
+		cwd = search_dir(&node, ppath);
+		if(cwd == -1)
+			return -ENOENT;
+	}
 
 	return 0;
 }
 
 int fs_symlink (const char *from, const char *to) {
+	inode fromnode, tonode, dir_fromnode, dir_tonode;
+	char fromppath[56], toppath[56];
+	int fromcwd, tocwd, frominum, toinum;
+	if(strlen(from) > PAGESIZE - sizeof(struct meta))
+		return -ENAMETOOLONG;
+	if((fromcwd = inode_trace(frompath, &dir_fromnode, fromppath)) == -1)
+		frominum = spb.root_directory;
+	else
+		frominum = search_dir(&dir_fromnode, fromppath);
+	inode_read(&fromnode, frominum);
+
+	tocwd = inode_trace(topath, &dir_tonode, toppath);
+	toinum = new_inode();
+	memset(&tonode, -1, sizeof(inode));
+	metadata_init(&tonode.attr, mode|S_IFLNK, strlen(from), inum);
+	memcpy(&(tonode.direct_ptr), from, strlen(from));
+
+	update_dir(&dir_tonode, toinum, toppath, S_IFLNK);
+	dir_tonode.attr.nlink++;
+	dir_tonode.attr.mtime = dir_tonode.attr.ctime = time(NULL);
+	inode_write(&dir_tonode, tocwd);
+	inode_write(&tonode, toinum);
 
 	return 0;
 }

@@ -14,6 +14,7 @@ int fs_fsyncdir (const char *, int, struct fuse_file_info *);
 
 int search_dir(inode *node, const char *ptr);
 int update_dir(inode *node, int inum, const char *ptr, int type);
+int rename_dir(inode *node, int inum, char *ptr);
 void update_direntry(dir_block *dir, int inum, const char *ptr, int idx, int blk, int type);
 int delete_dir(inode *node, int inum);
 int is_dir_empty(inode *node);
