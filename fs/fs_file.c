@@ -18,20 +18,21 @@ int fs_open (const char *path, struct fuse_file_info *fi) {
 	inode node;
 	char ppath[56];
 	int cwd;
+	struct fuse_context *fs_cxt = fuse_get_context();
 
 	if((cwd = inode_trace(path, &node, ppath)) == -1)
 		return -EINVAL;
 	fi->fh = search_dir(&node, ppath);
 
-	if (fi->flag & O_RDONLY || fi->flag & O_RDWR) {
+	if (fi->flags & O_RDONLY || fi->flags & O_RDWR) {
 		if(!(((mm.mode & S_IRUSR) && (mm.uid == fs_cxt->uid)) || ((mm.mode & S_IRGRP) && (mm.gid == fs_cxt->gid)) || (mm.mode & S_IROTH)))
 			return -1;
 	}
-	if (fi->flag & O_WRONLY || fi->flag & O_RDWR) {
+	if (fi->flags & O_WRONLY || fi->flags & O_RDWR) {
 		if(!(((mm.mode & S_IWUSR) && (mm.uid == fs_cxt->uid)) || ((mm.mode & S_IWGRP) && (mm.gid == fs_cxt->gid)) || (mm.mode & S_IWOTH)))
 			return -1;
 	}
-	if (fi->flag & O_EXEC) {
+	if (fi->flags & O_EXEC) {
 		if(!(((mm.mode & S_IXUSR) && (mm.uid == fs_cxt->uid)) || ((mm.mode & S_IXGRP) && (mm.gid == fs_cxt->gid)) || (mm.mode & S_IXOTH)))
 			return -1;
 	}
@@ -43,13 +44,13 @@ int fs_create (const char *path, mode_t mode, struct fuse_file_info *fi) {
 	inode node, dir_node;
 	char ppath[56];
 	int inum, cwd;
-
+/*
 	if((cwd = inode_trace(path, &dir_node, ppath)) == -1)
 		cwd = spb.root_directory;
 	else {
 		cwd = search_dir(&dir_node, ppath);
 		if(cwd == -1) {
-			if(fi->flag & O_CREAT)
+			if(fi->flags & O_CREAT)
 				return -ENOENT;
 			inum = new_inode();
 			memset(&node, -1, struct(inode));
@@ -59,11 +60,11 @@ int fs_create (const char *path, mode_t mode, struct fuse_file_info *fi) {
 			inode_write(&dir_node, cwd);
 
 		}
-		if(cwd != -1 && (fi->flag & O_EXCL) && (fi->flag & O_CREAT))
+		if(cwd != -1 && (fi->flags & O_EXCL) && (fi->flags & O_CREAT))
 			return -EEXIST;
 	}
 	inode_read(&node, cwd);
-
+*/
 	return 0;
 }
 
