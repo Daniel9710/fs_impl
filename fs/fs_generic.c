@@ -101,6 +101,9 @@ int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
 	char oldppath[56], newppath[56];
 	int oldcwd, newcwd, oldinum, newinum;
 
+	if(flags)
+		return -EINVAL;
+
 	if((oldcwd = inode_trace(oldpath, &dir_oldnode, oldppath)) == -1)
 		return -EACCES;
 	if((oldinum = search_dir(&dir_oldnode, oldppath)) == -1)
@@ -108,40 +111,29 @@ int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
 	if((newcwd = inode_trace(newpath, &dir_newnode, newppath)) == -1)
 		return -EACCES;
 	else if((newinum = search_dir(&dir_newnode, newppath)) != -1) {
-		if(flags & RENAME_NOREPLACE)
-			return -EACCES;
 		inode_read(&oldnode, oldinum);
 		inode_read(&newnode, newinum);
-		if(flags & RENAME_EXCHANGE) {
 
-			delete_dir(&dir_newnode, newinum);
-			update_dir(&dir_newnode, oldinum, oldppath, oldnode.attr.mode & 0770000);
-			if(newnode.attr.mode & S_ISDIR) {
-				dir_newnode.attr.nlink--;
-				dir_oldnode.attr.nlink++;
-			}
+		if(newnode.attr.mode & S_IFDIR) {
+			if(!(oldnode.attr.mode & S_IFDIR))
+				return -EISDIR;
+			if(is_dir_empty(&newnode) == -1)
+				return -ENOTEMPTY;
 		}
 		else {
-			if(newnode.attr.mode & S_ISDIR) {
-				if(!(oldnode.attr.mode & S_ISDIR))
-					return -EISDIR;
-				if(is_dir_empty(&newnode) == -1)
-					return -ENOTEMPTY;
-			}
-			else {
-				if(oldnode.attr.mode & S_ISDIR)
-					return -ENOTDIR;
-			}
-			remove_file(&newnode);
-			free_inode(newinum);
+			if(oldnode.attr.mode & S_IFDIR)
+				return -ENOTDIR;
 		}
+		remove_file(&newnode);
+		free_inode(newinum);
+
 	}
 	else
 		inode_read(&oldnode, oldinum);
 
 	delete_dir(&dir_oldnode, oldinum);
 	update_dir(&dir_newnode, oldinum, oldppath, oldnode.attr.mode & 0770000);
-	if(oldnode.attr.mode & S_ISDIR) {
+	if(oldnode.attr.mode & S_IFDIR) {
 		dir_oldnode.attr.nlink--;
 		dir_newnode.attr.nlink++;
 	}
@@ -180,7 +172,6 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 	monitor_init(&global_monitor);
 #endif
 	super_init();
-	printf("%d %d \n",sizeof(entry_dir), sizeof(dir_block));
 	fs_mkdir("/", 0755);
 	return NULL;
 }
