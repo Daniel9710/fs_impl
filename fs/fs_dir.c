@@ -14,12 +14,13 @@ extern struct superblock spb;
 int fs_opendir (const char *path, struct fuse_file_info *fi) {
 	fi->keep_cache = 1;
 	char ppath[60];
-	inode dir_node;
+	inode *dir_node = (inode *)malloc(sizeof(inode));
 
 	if(inode_trace(path, &dir_node, ppath) == -1)
-		fi->fh = spb.root_directory;
+		inode_read(dir_node, spb.root_directory);
 	else
-		fi->fh = search_dir(&dir_node, ppath);
+		inode_read(dir_node, search_dir(&dir_node, ppath));
+	fi->fh = dir_node;
 	return 0;
 }
 
@@ -64,15 +65,14 @@ int fs_readdir (const char *path, void *buf, fuse_fill_dir_t filler, off_t off, 
 
 	(void) off;
 	(void) flags;
-	inode node;
-	int inum = fi->fh, i, j;
+	inode *node = (inode *)fi->fh;
+	int i, j;
 	dir_block dir;
 	struct stat st;
 	memset(&st, 0, sizeof(struct stat));
-	inode_read(&node, inum);
 	for(i = 0; i < DIRECT_PTR; i++) {
-		if(node.direct_ptr[i] != -1) {
-			data_read((void *)&dir, node.direct_ptr[i]);
+		if(node->direct_ptr[i] != -1) {
+			data_read((void *)&dir, node->direct_ptr[i]);
 			for(j = 0; j < DIRPERPAGE; j++) {
 				if(dir.entry[j].inode_num != -1) {
 					st.st_ino = dir.entry[j].inode_num;
@@ -112,6 +112,8 @@ int fs_rmdir (const char *path) {
 }
 
 int fs_releasedir (const char *path, struct fuse_file_info *fi) {
+	inode *node = (inode *)fi->fh;
+	free(node);
 	(void) fi;
 	return 0;
 }

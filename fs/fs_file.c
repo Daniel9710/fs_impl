@@ -34,7 +34,7 @@ int fs_open (const char *path, struct fuse_file_info *fi) {
 		if(!(((mm.mode & S_IWUSR) && (mm.uid == fs_cxt->uid)) || ((mm.mode & S_IWGRP) && (mm.gid == fs_cxt->gid)) || (mm.mode & S_IWOTH)))
 			return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -43,7 +43,8 @@ int fs_create (const char *path, mode_t mode, struct fuse_file_info *fi) {
 	inode node, dir_node;
 	char ppath[56];
 	int inum, cwd;
-/*
+	
+	/*
 	if((cwd = inode_trace(path, &dir_node, ppath)) == -1)
 		cwd = spb.root_directory;
 	else {
@@ -63,7 +64,7 @@ int fs_create (const char *path, mode_t mode, struct fuse_file_info *fi) {
 			return -EEXIST;
 	}
 	inode_read(&node, cwd);
-*/
+	*/
 	return 0;
 }
 
