@@ -35,10 +35,11 @@ int fs_mkdir (const char *path, mode_t mode) {
 	node.direct_ptr[0] = entry_block[0];
 
 	if(cwd == -1)
-		spb.root_directory = inum;
+		cwd = spb.root_directory = inum;
 
 	else
-		update_dir(&dir_node, cwd, pptr);
+		update_dir(&dir_node, cwd, ppath);
+	
 	memset((void *)&dir_entry, -1, sizeof(dir_block));
 	strcpy(dir_entry.entry[0].name, ".");
 	dir_entry.entry[0].inode_num = inum;

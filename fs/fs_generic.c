@@ -25,27 +25,31 @@ struct monitor *global_monitor;
 struct superblock spb;
 
 int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
-	inode dir_node;
+	inode node;
 	char ppath[60];
-	printf("\n%ld\n\n",stbuf->st_ino);
-	int cwd = inode_trace(path, &dir_node, ppath);
+	int cwd = inode_trace(path, &node, ppath);
+	memset(stbuf, 0, sizeof(struct stat));
+	printf("\n\n%s, %s, %d\n\n",ppath, path, cwd);
 	if(cwd == -1)
 		cwd = spb.root_directory;
 	else {
-		if((cwd = search_dir(&dir_node, ppath)) == -1)
+		cwd = search_dir(&node, ppath);
+		printf("cwd : %d\n",cwd);
+		if(cwd == -1)
 			return -ENOENT;
 	}
-	inode_read(&dir_node, cwd);
+	printf("\n\n%s, %d\n\n",ppath,cwd);
+	inode_read(&node, cwd);
 	stbuf->st_ino = cwd;
-	stbuf->st_mode = dir_node.attr.mode;
-	stbuf->st_nlink = dir_node.attr.nlink;
-	stbuf->st_uid = dir_node.attr.uid;
-	stbuf->st_gid = dir_node.attr.gid;
-	stbuf->st_size = dir_node.attr.size;
+	stbuf->st_mode = node.attr.mode;
+	stbuf->st_nlink = node.attr.nlink;
+	stbuf->st_uid = node.attr.uid;
+	stbuf->st_gid = node.attr.gid;
+	stbuf->st_size = node.attr.size;
 	stbuf->st_blksize = PAGESIZE;
-	stbuf->st_atime = dir_node.attr.atime;
-	stbuf->st_mtime = dir_node.attr.mtime;
-	stbuf->st_ctime = dir_node.attr.ctime;
+	stbuf->st_atime = node.attr.atime;
+	stbuf->st_mtime = node.attr.mtime;
+	stbuf->st_ctime = node.attr.ctime;
 
     return 0;
 }
@@ -152,7 +156,7 @@ void free_list_init() {
    	 	data_write((void *)&ll, d_blk);
    	 	ll.next = d_blk--;
   	}
-  	for(i = node_num; i >= 0 && i_num >= 0; --i)
+  	for(i = node_num; i >= 0 && i_num > 0; --i)
     		ll.free_node[i] = i_num--;
 	spb.list_now = i + 1;
 	for(;i >= 0;--i)
@@ -302,47 +306,57 @@ void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino
 	meta->mtime = t;
 	meta->ino = ino;
 }
-int inode_trace(const char *path, inode *node, char *pptr) {
-	char ppath[100], *ptr;
-	int32_t cwd = -1;
+int inode_trace(const char *path, inode *node, char *file) {
+	char ppath[100], *pptr = NULL, *ptr;
+	int32_t cwd = -1,i;
 	inode dir_node;
 	strcpy(ppath, path);
-	printf("%s\n",ppath);
-
+	
+	
 	ptr = strtok(ppath, "/");
 	if(ptr != NULL) {
 		cwd = spb.root_directory;
 		while (1){
-			printf("%s\n", ptr);
+			printf("cwd : %d, path : %s\n",cwd, ptr);
 			inode_read(&dir_node, cwd);
+			printf("ino : %d, %d\n",dir_node.attr.ino, dir_node.direct_ptr[0]);
 			pptr = ptr;
-	  		ptr = strtok(NULL, "/");
-			if(ptr== NULL)
+	  		if((ptr = strtok(NULL, "/")) == NULL)
 				break;
 			cwd = search_dir(&dir_node, pptr);
 		}
+		
+		for(i = 0; *(pptr + i) != '\0'; i++)
+			*(file + i) = *(pptr + i);
+		*(file + i) = '\0';
+		*node = dir_node;
 	}
-	*node = dir_node;
+
 	return cwd;
 }
 
-int search_dir(inode *node, char *ptr) {
-    int i, j;
-    dir_block dir;
-    for(i = 0; i < DIRECT_PTR; i++){
-        if(node->direct_ptr[i] != -1) {
-            data_read((void *)&dir, node->direct_ptr[i]);
-            for(j = 0; j < DIRPERPAGE; j++) {
-                if(strcmp(dir.entry[j].name, ptr) == 0)
-                    return i * DIRPERPAGE + j;
-            }
-        }
+int search_dir(inode *node, const char *ptr) {
+	int i, j;
+    	dir_block dir;
+    	for(i = 0; i < DIRECT_PTR; i++){
+        	if(node->direct_ptr[i] != -1) {
+          	  	data_read((void *)&dir, node->direct_ptr[i]);
+	            	for(j = 0; j < DIRPERPAGE; j++) {
+				if(dir.entry[j].inode_num != -1) {
+					printf("dir : %s, %d\n",dir.entry[j].name, dir.entry[j].inode_num);
+        	       	 		if(strcmp(dir.entry[j].name, ptr) == 0)
+                    				return i * DIRPERPAGE + j;
+				}
+				else 
+					return -1;
+            		}
+        	}
 		else
 			return -1;
-    }
-    return -1;
+    	}
+    	return -1;
 }
-int update_dir(inode *node, int inum, char *ptr) {
+int update_dir(inode *node, int inum, const char *ptr) {
     int i, j, arr[3];
     dir_block dir;
     for(i = 0; i < DIRECT_PTR; i++){
