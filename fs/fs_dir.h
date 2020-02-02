@@ -12,4 +12,8 @@ int fs_rmdir (const char *);
 int fs_releasedir (const char *, struct fuse_file_info *);
 int fs_fsyncdir (const char *, int, struct fuse_file_info *);
 
+int update_dir(inode *node, int inum, const char *ptr);
+void update_direntry(dir_block *dir, int inum, const char *ptr, int idx, int blk);
+int delete_dir(inode *node, int inum);
+bool is_dir_empty(inode *node);
 #endif

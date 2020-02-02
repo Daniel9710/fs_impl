@@ -344,38 +344,7 @@ int search_dir(inode *node, const char *ptr) {
     	}
     	return -1;
 }
-int update_dir(inode *node, int inum, const char *ptr) {
-    int i, j, arr[3];
-    dir_block dir;
-    for(i = 0; i < DIRECT_PTR; i++){
-        if(node->direct_ptr[i] != -1) {
-            data_read((void *)&dir, node->direct_ptr[i]);
-            for(j = 0; j < DIRPERPAGE; j++) {
-                if(dir.entry[j].inode_num == -1) {
-                    dir.entry[j].inode_num = inum;
-                    strcpy(dir.entry[j].name, ptr);
-		    data_write((void *)&dir, node->direct_ptr[i]);
-                    return 0;
-                }
-            }
-        }
-        else {
-            if(search_bitmap(arr, 1) < 0)
-                return -1;
-            node->direct_ptr[i] = arr[0];
-            inode_write(node, node->attr.ino);
-            memset((void *)&dir, -1, sizeof(dir_block));
-            update_direntry(&dir, inum, ptr, 0, arr[0]);
-            return 0;
-        }
-    }
-    return -1;
-}
-void update_direntry(dir_block *dir, int inum, const char *ptr, int idx, int blk) {
-    strcpy(dir->entry[idx].name, ptr);
-    dir->entry[idx].inode_num = inum;
-    data_write((void *)dir, blk);
-}
+
 void cur_bit_test() {
 	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
 	bitmap_read(spb.cur_bit, spb.cur_bit_bn);
