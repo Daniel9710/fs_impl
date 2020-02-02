@@ -28,17 +28,15 @@ int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi)
 	inode node;
 	char ppath[60];
 	int cwd = inode_trace(path, &node, ppath);
+	(void) fi;
 	memset(stbuf, 0, sizeof(struct stat));
-	printf("\n\n%s, %s, %d\n\n",ppath, path, cwd);
 	if(cwd == -1)
 		cwd = spb.root_directory;
 	else {
 		cwd = search_dir(&node, ppath);
-		printf("cwd : %d\n",cwd);
 		if(cwd == -1)
 			return -ENOENT;
 	}
-	printf("\n\n%s, %d\n\n",ppath,cwd);
 	inode_read(&node, cwd);
 	stbuf->st_ino = cwd;
 	stbuf->st_mode = node.attr.mode;
@@ -116,8 +114,6 @@ void fs_destroy (void *private_data) {
 	return;
 }
 void super_init() {
-	int i;
-	char buf[PAGESIZE];
 	memset(buf,0,PAGESIZE);
 	spb.fp = open("a", O_RDWR | O_CREAT | O_TRUNC | O_LARGEFILE, 0644);
   	spb.root_directory = ROOT_DIR;
@@ -219,9 +215,9 @@ void inode_write(inode *node, uint32_t inode_block_num) {
   	uint32_t block_num = GET_BLOCKNUM(inode_block_num, INODEPERPAGE);
   	uint32_t bit_idx = GET_BITIDX(inode_block_num, INODEPERPAGE);
   	i_block blk;
-  	pread(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
+  	pread(spb.fp, &blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
   	blk.i[bit_idx] = *node;
-  	pwrite(spb.fp, (char*)&blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
+  	pwrite(spb.fp, &blk, PAGESIZE, (INODE_INIT_BN + block_num) * PAGESIZE);
 }
 
 int search_bitmap(int *arr, int num)
@@ -315,9 +311,7 @@ int inode_trace(const char *path, inode *node, char *file) {
 	if((ptr = strtok(ppath,"/")) != NULL) {
 		cwd = spb.root_directory;
 		while (1){
-			printf("cwd : %d, path : %s\n",cwd, ptr);
 			inode_read(&dir_node, cwd);
-			printf("ino : %d, %d\n",dir_node.attr.ino, dir_node.direct_ptr[0]);
 			pptr = ptr;
 	  		if((ptr = strtok(NULL, "/")) == NULL)
 				break;
@@ -338,16 +332,15 @@ int search_dir(inode *node, const char *ptr) {
     	for(i = 0; i < DIRECT_PTR; i++){
         	if(node->direct_ptr[i] != -1) {
           	  	data_read((void *)&dir, node->direct_ptr[i]);
-	            for(j = 0; j < DIRPERPAGE; j++) {
-					if(dir.entry[j].inode_num != -1) {
-						printf("dir : %s, %d\n",dir.entry[j].name, dir.entry[j].inode_num);
-        	       	 	if(strcmp(dir.entry[j].name, ptr) == 0)
-                    		return dir.entry[j].inode_num;
-					}
-            	}
+		        for(j = 0; j < DIRPERPAGE; j++) {
+				if(dir.entry[j].inode_num != -1) {
+        	      	 	 	if(strcmp(dir.entry[j].name, ptr) == 0)
+                    				return dir.entry[j].inode_num;
+				}
+            	    	}
         	}
-			else
-				return -1;
+		else
+			return -1;
     	}
     	return -1;
 }
@@ -361,7 +354,7 @@ int update_dir(inode *node, int inum, const char *ptr) {
                 if(dir.entry[j].inode_num == -1) {
                     dir.entry[j].inode_num = inum;
                     strcpy(dir.entry[j].name, ptr);
-					data_write((void *)&dir, node->direct_ptr[i]);
+		    data_write((void *)&dir, node->direct_ptr[i]);
                     return 0;
                 }
             }

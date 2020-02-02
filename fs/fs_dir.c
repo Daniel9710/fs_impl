@@ -26,7 +26,7 @@ int fs_mkdir (const char *path, mode_t mode) {
 	cwd = inode_trace(path, &dir_node, ppath);
 
 	inum = new_inode();
-	memset((void *)&node, -1, sizeof(inode));
+	memset(&node, -1, sizeof(inode));
 
 	metadata_init(&node.attr, mode|S_IFDIR, 4096, inum);
 	if(search_bitmap(entry_block, 1) < 0){
@@ -37,10 +37,11 @@ int fs_mkdir (const char *path, mode_t mode) {
 	if(cwd == -1)
 		cwd = spb.root_directory = inum;
 
-	else
-		update_dir(&dir_node, cwd, ppath);
-	
-	memset((void *)&dir_entry, -1, sizeof(dir_block));
+	else {
+		printf("inum:%d,ppath:%s\n",inum,ppath);
+		update_dir(&dir_node, inum, ppath);
+	}
+	memset(&dir_entry, -1, sizeof(dir_block));
 	strcpy(dir_entry.entry[0].name, ".");
 	dir_entry.entry[0].inode_num = inum;
 	strcpy(dir_entry.entry[1].name, "..");
