@@ -170,18 +170,18 @@ int fs_symlink (const char *from, const char *to) {
 	inode fromnode, tonode, dir_fromnode, dir_tonode;
 	char fromppath[56], toppath[56];
 	int fromcwd, tocwd, frominum, toinum;
-	if(strlen(from) > PAGESIZE - sizeof(struct meta))
+	if(strlen(from) > PAGESIZE - sizeof(struct metadata))
 		return -ENAMETOOLONG;
-	if((fromcwd = inode_trace(frompath, &dir_fromnode, fromppath)) == -1)
+	if((fromcwd = inode_trace(from, &dir_fromnode, fromppath)) == -1)
 		frominum = spb.root_directory;
 	else
 		frominum = search_dir(&dir_fromnode, fromppath);
 	inode_read(&fromnode, frominum);
 
-	tocwd = inode_trace(topath, &dir_tonode, toppath);
+	tocwd = inode_trace(to, &dir_tonode, toppath);
 	toinum = new_inode();
 	memset(&tonode, -1, sizeof(inode));
-	metadata_init(&tonode.attr, mode|S_IFLNK, strlen(from), inum);
+	metadata_init(&tonode.attr, (fromnode.attr.mode & ~(0770000))|S_IFLNK, strlen(from), toinum);
 	memcpy(&(tonode.direct_ptr), from, strlen(from));
 
 	update_dir(&dir_tonode, toinum, toppath, S_IFLNK);
