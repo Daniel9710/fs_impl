@@ -132,10 +132,12 @@ int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
 	else
 		inode_read(&oldnode, oldinum);
 
-	if(dir_oldnode.attr.ino == dir_newnode.attr.ino) 
+	if(dir_oldnode.attr.ino == dir_newnode.attr.ino) {
+			printf("\nsame\n");
 			rename_dir(&dir_newnode, oldinum, newppath);
-
+	}
 	else {
+		printf("\ndifferent\n");
 		delete_dir(&dir_oldnode, oldinum);
 		update_dir(&dir_newnode, oldinum, newppath, oldnode.attr.mode & 0770000);
 		if(oldnode.attr.mode & S_IFDIR) {
