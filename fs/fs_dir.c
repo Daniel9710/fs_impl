@@ -121,6 +121,24 @@ int fs_fsyncdir (const char *path, int datasync, struct fuse_file_info *fi) {
 	return 0;
 }
 
+int search_dir(inode *node, const char *ptr) {
+	int i, j;
+    	dir_block dir;
+    	for(i = 0; i < DIRECT_PTR; i++){
+        	if(node->direct_ptr[i] != -1) {
+          	  	data_read((void *)&dir, node->direct_ptr[i]);
+		        for(j = 0; j < DIRPERPAGE; j++) {
+					if(dir.entry[j].inode_num != -1) {
+        	      	 	 	if(strcmp(dir.entry[j].name, ptr) == 0)
+                    				return dir.entry[j].inode_num;
+					}
+          		}
+        	}
+			else
+				return -1;
+    	}
+    	return -1;
+}
 
 int update_dir(inode *node, int inum, const char *ptr, int type) {
     int i, j, arr[3];

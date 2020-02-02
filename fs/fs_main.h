@@ -20,6 +20,9 @@
 #define INODEPERPAGE (PAGESIZE / INODESIZE)
 #define DIRPERPAGE (PAGESIZE / (MAXNAMESIZE + 8))
 
+#define FOR_EACH_DIRECT(idx) for(idx = 0; idx < DIRECT_PTR; idx++)
+#define FOR_EACH_ENTRY(idx) for(idx = 0; idx < ENTRYPERPAGE; idx++)
+#define FOR_EACH_INODE(idx) for(idx = 0; idx < INODEPERPAGE; idx++)
 
 #define SUPER_INIT_BN 0
 #define D_BITMAP_INIT_BN 1
@@ -54,7 +57,6 @@ typedef struct superblock {
 }superblock;
 
 typedef struct inode {
-
 	struct metadata attr;
 	int32_t direct_ptr[DIRECT_PTR];
 	int32_t indirect_ptr[INDIRECT_PTR];
@@ -65,20 +67,25 @@ typedef struct inode {
 typedef struct i_block {
 	struct inode i[PAGESIZE / INODEPERPAGE];
 }i_block;
+
 typedef struct indirect_ptr{
 	int32_t ptr[ENTRYPERPAGE];
 }indirect_ptr;
+
 typedef struct entry_dir {
 	uint32_t type;
 	int32_t inode_num;
 	char name[MAXNAMESIZE];
 }entry_dir;
+
 typedef struct dir_block {
 	entry_dir entry[DIRPERPAGE];
 }dir_block;
+
 typedef struct d_bitmap {
 	uint8_t bitset[PAGESIZE];
 }d_bitmap;
+
 typedef struct free_list {
 	int32_t free_node[ENTRYPERPAGE - 1];
 	int32_t next;

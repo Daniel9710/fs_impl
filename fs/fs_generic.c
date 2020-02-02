@@ -58,16 +58,113 @@ int fs_utimens (const char *path, const struct timespec ts[2], struct fuse_file_
 }
 
 int fs_chmod (const char *path, mode_t mode, struct fuse_file_info *fi) {
-
+	inode node;
+	char ppath[56];
+	int cwd = inode_trace(path, &node, ppath);
+	(void) fi;
+	if(cwd == -1)
+		cwd = spb.root_directory;
+	else {
+		cwd = search_dir(&node, ppath);
+		if(cwd == -1)
+			return -ENOENT;
+	}
+	inode_read(&node, cwd);
+	node.attr.mode = mode;
+	node.att.atime = node.attr.ctime = time(NULL);
+	inode_write(&node, cwd);
     return 0;
 }
 
 int fs_chown (const char *path, uid_t uid, gid_t gid, struct fuse_file_info *fi) {
-
+	inode node;
+	char ppath[56];
+	int cwd = inode_trace(path, &node, ppath);
+	(void) fi;
+	if(cwd == -1)
+		cwd = spb.root_directory;
+	else {
+		cwd = search_dir(&node, ppath);
+		if(cwd == -1)
+			return -ENOENT;
+	}
+	inode_read(&node, cwd);
+	node.attr.uid = uid;
+	node.attr.gid = gid;
+	node.att.atime = node.attr.ctime = time(NULL);
+	inode_write(&node, cwd);
     return 0;
 }
 
 int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
+	inode oldnode, newnode, dir_oldnode, dir_newnode;
+	char oldppath[56], newppath[56];
+	int oldcwd, newcwd, oldinum, newinum;
+
+	if((oldcwd = inode_trace(oldpath, &dir_oldnode, oldppath)) == -1)
+		return -EACCES;
+	if((oldinum = search_dir(&dir_oldnode, oldppath)) == -1)
+		return -ENOENT;
+	if((newcwd = inode_trace(newpath, &dir_newnode, newppath)) == -1)
+		return -EACCES;
+	else if((newinum = search_dir(&dir_newnode, newppath)) != -1) {
+		if(flags & RENAME_NOREPLACE)
+			return -EACCES;
+		inode_read(&oldnode, oldinum);
+		inode_read(&newnode, newinum);
+		if(flags & RENAME_EXCHANGE) {
+			delete_dir(&dir_oldnode, oldinum);
+			update_dir(&dir_oldnode, newinum, newppath, newnode.attr.mode & 0770000);
+			if(newnode.attr.mode & S_ISDIR) {
+				dir_newnode.attr.nlink--;
+				dir_oldnode.attr.nlink++;
+			}
+			delete_dir(&dir_newnode, newinum);
+			update_dir(&dir_newnode, oldinum, oldppath, oldnode.attr.mode & 0770000);
+			if(oldnode.attr.mode & S_ISDIR) {
+				dir_oldnode.attr.nlink--;
+				dir_newnode.attr.nlink++;
+			}
+			dir_oldnode.attr.mtime = dir_oldnode.attr.ctime = dir_newnode.attr.mtime = dir_newnode.attr.ctime = time(NULL);
+			inode_write(&dir_oldnode, oldcwd);
+			inode_write(&dir_newnode, newcwd);
+		}
+		else {
+			if(newnode.attr.mode & S_ISDIR) {
+				if(!(oldnode.attr.mode & S_ISDIR))
+					return -EISDIR;
+				if(is_dir_empty(&newnode) == -1)
+					return -ENOTEMPTY;
+			}
+			else {
+				if(oldnode.attr.mode & S_ISDIR)
+					return -ENOTDIR;
+			}
+			remove_file(&newnode);
+			free_inode(newinum);
+			delete_dir(&dir_oldnode, oldinum);
+			update_dir(&dir_newnode, oldinum, oldppath, oldnode.attr.mode & 0770000);
+			if(oldnode.attr.mode & S_ISDIR) {
+				dir_oldnode.attr.nlink--;
+				dir_newnode.attr.nlink++;
+			}
+			dir_oldnode.attr.mtime = dir_oldnode.attr.ctime = dir_newnode.attr.mtime = dir_newnode.attr.ctime = time(NULL);
+			inode_write(&dir_oldnode, oldcwd);
+			inode_write(&dir_newnode, newcwd);
+		}
+	}
+	else {
+		inode_read(&oldnode, oldinum);
+		delete_dir(&dir_oldnode, oldinum);
+		update_dir(&dir_newnode, oldinum, oldppath, oldnode.attr.mode & 0770000);
+		if(oldnode.attr.mode & S_ISDIR) {
+			dir_oldnode.attr.nlink--;
+			dir_newnode.attr.nlink++;
+		}
+		dir_oldnode.attr.mtime = dir_oldnode.attr.ctime = dir_newnode.attr.mtime = dir_newnode.attr.ctime = time(NULL);
+		inode_write(&dir_oldnode, oldcwd);
+		inode_write(&dir_newnode, newcwd);
+	}
 
     return 0;
 }
@@ -190,7 +287,7 @@ void bitmap_update(uint32_t data_block_num, uint32_t type) {
   	}
   	else {
   	  	BIT_CLEAR(spb.cur_bit->bitset[bit_idx / 8], (bit_idx % 8));
-    		spb.free_d_block++;
+    	spb.free_d_block++;
   	}
 }
 
@@ -287,6 +384,31 @@ void free_inode(int block_num){
 	spb.free_inode++;
   	data_write((void *)ll, spb.list_first);
 }
+int inode_trace(const char *path, inode *node, char *file) {
+	char ppath[100], *pptr = NULL, *ptr;
+	int32_t cwd = -1,i;
+	inode dir_node;
+
+	strcpy(ppath, path);
+	if((ptr = strtok(ppath,"/")) != NULL) {
+		cwd = spb.root_directory;
+		while (1){
+			inode_read(&dir_node, cwd);
+			pptr = ptr;
+	  		if((ptr = strtok(NULL, "/")) == NULL)
+				break;
+			if((cwd = search_dir(&dir_node, pptr)) == -1)
+				return -2;
+		}
+
+		for(i = 0; *(pptr + i) != '\0'; i++)
+			*(file + i) = *(pptr + i);
+		*(file + i) = '\0';
+		*node = dir_node;
+	}
+	return cwd;
+}
+
 void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino) {
 	time_t t = time(NULL);
 	struct fuse_context *fs_cxt = fuse_get_context();
@@ -301,49 +423,6 @@ void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino
 	meta->mtime = t;
 	meta->ino = ino;
 }
-int inode_trace(const char *path, inode *node, char *file) {
-	char ppath[100], *pptr = NULL, *ptr;
-	int32_t cwd = -1,i;
-	inode dir_node;
-
-	strcpy(ppath, path);
-	if((ptr = strtok(ppath,"/")) != NULL) {
-		cwd = spb.root_directory;
-		while (1){
-			inode_read(&dir_node, cwd);
-			pptr = ptr;
-	  		if((ptr = strtok(NULL, "/")) == NULL)
-				break;
-			cwd = search_dir(&dir_node, pptr);
-		}
-
-		for(i = 0; *(pptr + i) != '\0'; i++)
-			*(file + i) = *(pptr + i);
-		*(file + i) = '\0';
-		*node = dir_node;
-	}
-	return cwd;
-}
-
-int search_dir(inode *node, const char *ptr) {
-	int i, j;
-    	dir_block dir;
-    	for(i = 0; i < DIRECT_PTR; i++){
-        	if(node->direct_ptr[i] != -1) {
-          	  	data_read((void *)&dir, node->direct_ptr[i]);
-		        for(j = 0; j < DIRPERPAGE; j++) {
-				if(dir.entry[j].inode_num != -1) {
-        	      	 	 	if(strcmp(dir.entry[j].name, ptr) == 0)
-                    				return dir.entry[j].inode_num;
-				}
-            	    	}
-        	}
-		else
-			return -1;
-    	}
-    	return -1;
-}
-
 void cur_bit_test() {
 	bitmap_write(spb.cur_bit, spb.cur_bit_bn);
 	bitmap_read(spb.cur_bit, spb.cur_bit_bn);

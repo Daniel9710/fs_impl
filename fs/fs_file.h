@@ -15,4 +15,6 @@ int fs_truncate (const char *, off_t, struct fuse_file_info *);
 int fs_release (const char *, struct fuse_file_info *);
 int fs_fsync (const char *, int isdatasync, struct fuse_file_info *);
 
+
+void remove_file(inode *inode);
 #endif

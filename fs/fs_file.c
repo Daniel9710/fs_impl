@@ -59,3 +59,46 @@ int fs_fsync (const char *path, int isdatasync, struct fuse_file_info *fi) {
 
 	return 0;
 }
+void remove_file(inode *node) {
+	int i,j,k,l;
+	indirect_ptr in_ptr, d_in_ptr;
+	for(i = 0; i < DIRECT_PTR; i++) {
+		if(node->direct_ptr[i] != -1)
+			bitmap_update(node->direct_ptr[i], INVALID);
+		else
+			return;
+	}
+	for(k = 0; k < INDIRECT_PTR; k++) {
+		if(node->indirect_ptr[k] != -1) {
+			data_read((void *)&in_ptr, node->indirect_ptr[k]);
+			for(i = 0; i < ENTRYPERPAGE; i++) {
+				if(in_ptr.ptr[i] != -1)
+					bitmap_update(in_ptr.ptr[i], INVALID);
+				else
+					return;
+			}
+		}
+		else
+			return;
+	}
+	for(l = 0; l < D_INDIRECT_PTR; l++) {
+		if(node->d_indirect_ptr[l] != -1) {
+			data_read((void *)&d_in_ptr, node->d_indirect_ptr[k]);
+			for(k = 0; k < INDIRECT_PTR; k++) {
+				if(d_in_ptr.ptr[k] != -1) {
+					data_read((void *)&in_ptr, d_in_ptr.ptr[k]);
+					for(i = 0; i < ENTRYPERPAGE; i++) {
+						if(in_ptr.ptr[i] != -1)
+							bitmap_update(in_ptr.ptr[i], INVALID);
+						else
+							return;
+					}
+				}
+				else
+					return;
+			}
+		}
+		else
+			return;
+	}
+}
