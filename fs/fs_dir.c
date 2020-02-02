@@ -63,7 +63,7 @@ int fs_mkdir (const char *path, mode_t mode) {
 
 int fs_readdir (const char *path, void *buf, fuse_fill_dir_t filler, off_t off, struct fuse_file_info *fi, enum fuse_readdir_flags flags) {
 
-	(void) offset;
+	(void) off;
 	(void) flags;
 	char ptr[100];
 	inode node;
@@ -73,8 +73,8 @@ int fs_readdir (const char *path, void *buf, fuse_fill_dir_t filler, off_t off, 
 	memset(&st, 0, sizeof(struct stat));
 	inode_read(&node, inum);
 	for(i = 0; i < DIRECT_PTR; i++) {
-		if(node->direct_ptr[i] != -1) {
-			data_read((void *)&dir, node->direct_ptr[i]);
+		if(node.direct_ptr[i] != -1) {
+			data_read((void *)&dir, node.direct_ptr[i]);
 			for(j = 0; j < ENTRYPERPAGE; j++) {
 				if((st.st_ino = dir.entry[j].inode_num) > -1) {
 					st.st_mode = dir.entry[j].type;
