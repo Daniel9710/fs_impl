@@ -310,11 +310,9 @@ int inode_trace(const char *path, inode *node, char *file) {
 	char ppath[100], *pptr = NULL, *ptr;
 	int32_t cwd = -1,i;
 	inode dir_node;
+
 	strcpy(ppath, path);
-	
-	
-	ptr = strtok(ppath, "/");
-	if(ptr != NULL) {
+	if((ptr = strtok(ppath,"/")) != NULL) {
 		cwd = spb.root_directory;
 		while (1){
 			printf("cwd : %d, path : %s\n",cwd, ptr);
@@ -325,13 +323,12 @@ int inode_trace(const char *path, inode *node, char *file) {
 				break;
 			cwd = search_dir(&dir_node, pptr);
 		}
-		
+
 		for(i = 0; *(pptr + i) != '\0'; i++)
 			*(file + i) = *(pptr + i);
 		*(file + i) = '\0';
 		*node = dir_node;
 	}
-
 	return cwd;
 }
 
@@ -341,18 +338,16 @@ int search_dir(inode *node, const char *ptr) {
     	for(i = 0; i < DIRECT_PTR; i++){
         	if(node->direct_ptr[i] != -1) {
           	  	data_read((void *)&dir, node->direct_ptr[i]);
-	            	for(j = 0; j < DIRPERPAGE; j++) {
-				if(dir.entry[j].inode_num != -1) {
-					printf("dir : %s, %d\n",dir.entry[j].name, dir.entry[j].inode_num);
-        	       	 		if(strcmp(dir.entry[j].name, ptr) == 0)
-                    				return i * DIRPERPAGE + j;
-				}
-				else 
-					return -1;
-            		}
+	            for(j = 0; j < DIRPERPAGE; j++) {
+					if(dir.entry[j].inode_num != -1) {
+						printf("dir : %s, %d\n",dir.entry[j].name, dir.entry[j].inode_num);
+        	       	 	if(strcmp(dir.entry[j].name, ptr) == 0)
+                    		return dir.entry[j].inode_num;
+					}
+            	}
         	}
-		else
-			return -1;
+			else
+				return -1;
     	}
     	return -1;
 }
@@ -366,6 +361,7 @@ int update_dir(inode *node, int inum, const char *ptr) {
                 if(dir.entry[j].inode_num == -1) {
                     dir.entry[j].inode_num = inum;
                     strcpy(dir.entry[j].name, ptr);
+					data_write((void *)dir, node->direct_ptr[i]);
                     return 0;
                 }
             }
