@@ -32,6 +32,6 @@ int search_bitmap(int *arr, int num);
 int new_inode();
 void free_inode(int block_num);
 int inode_trace(const char *path, inode *node, char *file);
-void metadata_init(struct metadata *meta, mode_t mode, size_t size, uint64_t ino);
+void metadata_init(struct metadata *meta, mode_t mode, int link, size_t size, uint64_t ino);
 void cur_bit_test();
 #endif
