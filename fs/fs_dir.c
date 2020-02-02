@@ -24,7 +24,7 @@ int fs_opendir (const char *path, struct fuse_file_info *fi) {
 }
 
 int fs_mkdir (const char *path, mode_t mode) {
-	char ppath[60];
+	char ppath[56];
 	int32_t cwd, inum, entry_block[0];
 	inode node, dir_node;
 	dir_block dir_entry;
@@ -44,7 +44,7 @@ int fs_mkdir (const char *path, mode_t mode) {
 		cwd = spb.root_directory = inum;
 
 	else {
-		update_dir(&dir_node, inum, ppath);
+		update_dir(&dir_node, inum, ppath,S_IFDIR);
 		dir_node.attr.nlink++;
 		dir_node.attr.mtime = dir_node.attr.ctime = time(NULL);
 		inode_write(&dir_node, cwd);
@@ -65,9 +65,8 @@ int fs_readdir (const char *path, void *buf, fuse_fill_dir_t filler, off_t off, 
 
 	(void) off;
 	(void) flags;
-	char ptr[100];
 	inode node;
-	int inum = fi->fh, dnum, i, j;
+	int inum = fi->fh, i, j;
 	dir_block dir;
 	struct stat st;
 	memset(&st, 0, sizeof(struct stat));
@@ -75,8 +74,9 @@ int fs_readdir (const char *path, void *buf, fuse_fill_dir_t filler, off_t off, 
 	for(i = 0; i < DIRECT_PTR; i++) {
 		if(node.direct_ptr[i] != -1) {
 			data_read((void *)&dir, node.direct_ptr[i]);
-			for(j = 0; j < ENTRYPERPAGE; j++) {
-				if((st.st_ino = dir.entry[j].inode_num) > -1) {
+			for(j = 0; j < DIRPERPAGE; j++) {
+				if(dir.entry[j].inode_num != -1) {
+					st.st_ino = dir.entry[j].inode_num;
 					st.st_mode = dir.entry[j].type;
 					filler(buf, dir.entry[j].name, &st, 0, (enum fuse_fill_dir_flags)0);
 				}
@@ -122,7 +122,7 @@ int fs_fsyncdir (const char *path, int datasync, struct fuse_file_info *fi) {
 }
 
 
-int update_dir(inode *node, int inum, const char *ptr) {
+int update_dir(inode *node, int inum, const char *ptr, int type) {
     int i, j, arr[3];
     dir_block dir;
     for(i = 0; i < DIRECT_PTR; i++){
@@ -130,8 +130,8 @@ int update_dir(inode *node, int inum, const char *ptr) {
             data_read((void *)&dir, node->direct_ptr[i]);
             for(j = 0; j < DIRPERPAGE; j++) {
                 if(dir.entry[j].inode_num == -1) {
-					update_direntry(&dir, inum, ptr, j, node->direct_ptr[i]);
-                    return 0;
+			update_direntry(&dir, inum, ptr, j, node->direct_ptr[i], type);
+                    	return 0;
                 }
             }
         }
@@ -140,15 +140,16 @@ int update_dir(inode *node, int inum, const char *ptr) {
                 return -1;
             node->direct_ptr[i] = arr[0];
             memset((void *)&dir, -1, sizeof(dir_block));
-            update_direntry(&dir, inum, ptr, 0, arr[0]);
+            update_direntry(&dir, inum, ptr, 0, arr[0], type);
             return 0;
         }
     }
     return -1;
 }
-void update_direntry(dir_block *dir, int inum, const char *ptr, int idx, int blk) {
+void update_direntry(dir_block *dir, int inum, const char *ptr, int idx, int blk, int type) {
     strcpy(dir->entry[idx].name, ptr);
     dir->entry[idx].inode_num = inum;
+    dir->entry[idx].type = type;
     data_write((void *)dir, blk);
 }
 int delete_dir(inode *node, int inum){
@@ -159,8 +160,8 @@ int delete_dir(inode *node, int inum){
             data_read((void *)&dir, node->direct_ptr[i]);
             for(j = 0; j < DIRPERPAGE; j++) {
                 if(dir.entry[j].inode_num == inum) {
-					update_direntry(&dir, -1, "--", j, node->direct_ptr[i]);
-					return 0;
+			update_direntry(&dir, -1, "--", j, node->direct_ptr[i], 0);
+			return 0;
                 }
             }
         }

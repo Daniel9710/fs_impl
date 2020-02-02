@@ -26,7 +26,7 @@ struct superblock spb;
 
 int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
 	inode node;
-	char ppath[60];
+	char ppath[56];
 	int cwd = inode_trace(path, &node, ppath);
 	(void) fi;
 	memset(stbuf, 0, sizeof(struct stat));
@@ -100,7 +100,7 @@ void *fs_init (struct fuse_conn_info *conn, struct fuse_config *cfg) {
 	monitor_init(&global_monitor);
 #endif
 	super_init();
-
+	printf("%d %d \n",sizeof(entry_dir), sizeof(dir_block));
 	fs_mkdir("/", 0755);
 	return NULL;
 }
