@@ -27,10 +27,10 @@ struct superblock spb;
 int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
 	inode node;
 	char ppath[56];
-	int cwd = inode_trace(path, &node, ppath);
+	int cwd;
 	(void) fi;
 	memset(stbuf, 0, sizeof(struct stat));
-	if(cwd == -1)
+	if((cwd = inode_trace(path, &node, ppath)) == -1)
 		cwd = spb.root_directory;
 	else {
 		cwd = search_dir(&node, ppath);
