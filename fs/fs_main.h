@@ -14,11 +14,11 @@
 #define G 1024 * M
 #define T 1024L * G
 
-#define MAXNAMESIZE 60
+#define MAXNAMESIZE 56
 #define INODESIZE 256
 #define ENTRYPERPAGE (PAGESIZE / 4)
 #define INODEPERPAGE (PAGESIZE / INODESIZE)
-#define DIRPERPAGE (PAGESIZE / (MAXNAMESIZE + 4))
+#define DIRPERPAGE (PAGESIZE / (MAXNAMESIZE + 8))
 
 
 #define SUPER_INIT_BN 0
@@ -26,7 +26,7 @@
 #define INODE_INIT_BN 78
 #define DATA_INIT_BN (INODE_INIT_BN + 100 * K)
 #define D_BITMAP_NUM (INODE_INIT_BN - D_BITMAP_INIT_BN)
-#define INODE_BLOCK_NUM( )DATA_INIT_BN - INODE_INIT_BN)
+#define INODE_BLOCK_NUM (DATA_INIT_BN - INODE_INIT_BN)
 #define TOTAL_INODE_NUM (INODE_BLOCK_NUM * (PAGESIZE / INODESIZE))
 #define DIRECT_PTR 40
 #define INDIRECT_PTR 6
@@ -69,6 +69,7 @@ typedef struct indirect_ptr{
 	int32_t ptr[ENTRYPERPAGE];
 }indirect_ptr;
 typedef struct entry_dir {
+	uint32_t type;
 	int32_t inode_num;
 	char name[MAXNAMESIZE];
 }entry_dir;
@@ -84,4 +85,3 @@ typedef struct free_list {
 }free_list;
 
 #endif
-

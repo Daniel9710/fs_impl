@@ -13,7 +13,13 @@ extern struct superblock spb;
 
 int fs_opendir (const char *path, struct fuse_file_info *fi) {
 	fi->keep_cache = 1;
+	char ppath[60];
+	inode dir_node;
 
+	if(inode_trace(path, &dir_node, ppath) == -1)
+		fi->fh = spb.root_directory;
+	else
+		fi->fh = search_dir(&dir_node, ppath);
 	return 0;
 }
 
@@ -44,10 +50,12 @@ int fs_mkdir (const char *path, mode_t mode) {
 		inode_write(&dir_node, cwd);
 	}
 	memset(&dir_entry, -1, sizeof(dir_block));
-	strcpy(dir_entry.entry[0].name, ".");
+	dir_entry.entry[0].type = S_IFDIR;
 	dir_entry.entry[0].inode_num = inum;
-	strcpy(dir_entry.entry[1].name, "..");
+	strcpy(dir_entry.entry[0].name, ".");
+	dir_entry.entry[1].type = S_IFDIR;
 	dir_entry.entry[1].inode_num = cwd;
+	strcpy(dir_entry.entry[1].name, "..");
 	data_write((void *)&dir_entry, node.direct_ptr[0]);
 	inode_write(&node, inum);
 	return 0;
@@ -55,9 +63,28 @@ int fs_mkdir (const char *path, mode_t mode) {
 
 int fs_readdir (const char *path, void *buf, fuse_fill_dir_t filler, off_t off, struct fuse_file_info *fi, enum fuse_readdir_flags flags) {
 
-	filler(buf, ".", NULL, 0, (enum fuse_fill_dir_flags)0);
-	filler(buf, "..", NULL, 0, (enum fuse_fill_dir_flags)0);
-
+	(void) offset;
+	(void) flags;
+	char ptr[100];
+	inode node;
+	int inum = fi->fh, dnum, i, j;
+	dir_block dir;
+	struct stat st;
+	memset(&st, 0, sizeof(struct stat));
+	inode_read(&node, inum);
+	for(i = 0; i < DIRECT_PTR; i++) {
+		if(node->direct_ptr[i] != -1) {
+			data_read((void *)&dir, node->direct_ptr[i]);
+			for(j = 0; j < ENTRYPERPAGE; j++) {
+				if((st.st_ino = dir.entry[j].inode_num) > -1) {
+					st.st_mode = dir.entry[j].type;
+					filler(buf, dir.entry[j].name, &st, 0, (enum fuse_fill_dir_flags)0);
+				}
+			}
+		}
+		else
+			break;
+	}
 	return 0;
 }
 
@@ -86,6 +113,7 @@ int fs_rmdir (const char *path) {
 }
 
 int fs_releasedir (const char *path, struct fuse_file_info *fi) {
+	(void) fi;
 	return 0;
 }
 
