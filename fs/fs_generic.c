@@ -71,7 +71,7 @@ int fs_chmod (const char *path, mode_t mode, struct fuse_file_info *fi) {
 	}
 	inode_read(&node, cwd);
 	node.attr.mode = mode;
-	node.att.atime = node.attr.ctime = time(NULL);
+	node.attr.atime = node.attr.ctime = time(NULL);
 	inode_write(&node, cwd);
     return 0;
 }
@@ -91,7 +91,7 @@ int fs_chown (const char *path, uid_t uid, gid_t gid, struct fuse_file_info *fi)
 	inode_read(&node, cwd);
 	node.attr.uid = uid;
 	node.attr.gid = gid;
-	node.att.atime = node.attr.ctime = time(NULL);
+	node.attr.atime = node.attr.ctime = time(NULL);
 	inode_write(&node, cwd);
     return 0;
 }
@@ -113,21 +113,13 @@ int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
 		inode_read(&oldnode, oldinum);
 		inode_read(&newnode, newinum);
 		if(flags & RENAME_EXCHANGE) {
-			delete_dir(&dir_oldnode, oldinum);
-			update_dir(&dir_oldnode, newinum, newppath, newnode.attr.mode & 0770000);
+
+			delete_dir(&dir_newnode, newinum);
+			update_dir(&dir_newnode, oldinum, oldppath, oldnode.attr.mode & 0770000);
 			if(newnode.attr.mode & S_ISDIR) {
 				dir_newnode.attr.nlink--;
 				dir_oldnode.attr.nlink++;
 			}
-			delete_dir(&dir_newnode, newinum);
-			update_dir(&dir_newnode, oldinum, oldppath, oldnode.attr.mode & 0770000);
-			if(oldnode.attr.mode & S_ISDIR) {
-				dir_oldnode.attr.nlink--;
-				dir_newnode.attr.nlink++;
-			}
-			dir_oldnode.attr.mtime = dir_oldnode.attr.ctime = dir_newnode.attr.mtime = dir_newnode.attr.ctime = time(NULL);
-			inode_write(&dir_oldnode, oldcwd);
-			inode_write(&dir_newnode, newcwd);
 		}
 		else {
 			if(newnode.attr.mode & S_ISDIR) {
@@ -142,29 +134,20 @@ int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
 			}
 			remove_file(&newnode);
 			free_inode(newinum);
-			delete_dir(&dir_oldnode, oldinum);
-			update_dir(&dir_newnode, oldinum, oldppath, oldnode.attr.mode & 0770000);
-			if(oldnode.attr.mode & S_ISDIR) {
-				dir_oldnode.attr.nlink--;
-				dir_newnode.attr.nlink++;
-			}
-			dir_oldnode.attr.mtime = dir_oldnode.attr.ctime = dir_newnode.attr.mtime = dir_newnode.attr.ctime = time(NULL);
-			inode_write(&dir_oldnode, oldcwd);
-			inode_write(&dir_newnode, newcwd);
 		}
 	}
-	else {
+	else
 		inode_read(&oldnode, oldinum);
-		delete_dir(&dir_oldnode, oldinum);
-		update_dir(&dir_newnode, oldinum, oldppath, oldnode.attr.mode & 0770000);
-		if(oldnode.attr.mode & S_ISDIR) {
-			dir_oldnode.attr.nlink--;
-			dir_newnode.attr.nlink++;
-		}
-		dir_oldnode.attr.mtime = dir_oldnode.attr.ctime = dir_newnode.attr.mtime = dir_newnode.attr.ctime = time(NULL);
-		inode_write(&dir_oldnode, oldcwd);
-		inode_write(&dir_newnode, newcwd);
+
+	delete_dir(&dir_oldnode, oldinum);
+	update_dir(&dir_newnode, oldinum, oldppath, oldnode.attr.mode & 0770000);
+	if(oldnode.attr.mode & S_ISDIR) {
+		dir_oldnode.attr.nlink--;
+		dir_newnode.attr.nlink++;
 	}
+	dir_oldnode.attr.mtime = dir_oldnode.attr.ctime = dir_newnode.attr.mtime = dir_newnode.attr.ctime = time(NULL);
+	inode_write(&dir_oldnode, oldcwd);
+	inode_write(&dir_newnode, newcwd);
 
     return 0;
 }
