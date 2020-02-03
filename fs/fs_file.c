@@ -259,8 +259,7 @@ int fs_truncate (const char *path, off_t off, struct fuse_file_info *fi) {
 }
 
 int fs_release (const char *path, struct fuse_file_info *fi) {
-	inode *node = (inode *)fi->fh;
-	inode node,dir_node;
+	inode *node = (inode *)fi->fh, dir_node;
 	char ppath[56];
 	int cwd, inum;
 	if((inum = node->attr.ino) == -1) {
