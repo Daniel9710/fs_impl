@@ -34,7 +34,7 @@
 #define DIRECT_PTR 40
 #define INDIRECT_PTR 6
 #define D_INDIRECT_PTR 2
-#define ROOT_DIR 1
+#define ROOT_DIR 0
 
 #define INVALID 0
 #define VALID 1

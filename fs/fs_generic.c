@@ -304,7 +304,7 @@ void free_list_init() {
    	 	data_write((void *)&ll, d_blk);
    	 	ll.next = d_blk--;
   	}
-  	for(i = node_num; i >= 0 && i_num > 0; --i)
+  	for(i = node_num; i >= 0 && i_num >= 0; --i)
     		ll.free_node[i] = i_num--;
 	spb.list_now = i + 1;
 	for(;i >= 0;--i)

@@ -112,8 +112,7 @@ int fs_rmdir (const char *path) {
 }
 
 int fs_releasedir (const char *path, struct fuse_file_info *fi) {
-	inode *node = (inode *)fi->fh;
-	free(node);
+	free((inode *)fi->fh);
 	(void) fi;
 	return 0;
 }

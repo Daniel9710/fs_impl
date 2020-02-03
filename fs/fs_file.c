@@ -16,16 +16,17 @@ extern struct superblock spb;
 
 int fs_open (const char *path, struct fuse_file_info *fi) {
 	fi->keep_cache = 1;
-	inode node;
+	inode *node = (inode *)malloc(sizeof(inode));
 	char ppath[56];
 	int cwd;
 	struct metadata mm;
 	struct fuse_context *fs_cxt = fuse_get_context();
 
-	if((cwd = inode_trace(path, &node, ppath)) == -1)
+	if((cwd = inode_trace(path, node, ppath)) == -1)
 		return -EINVAL;
-	fi->fh = search_dir(&node, ppath);
-	mm = node.attr;
+	cwd = search_dir(node, ppath);
+	inode_read(node,cwd);
+	mm = node->attr;
 	if (fi->flags & O_RDONLY || fi->flags & O_RDWR) {
 		if(!(((mm.mode & S_IRUSR) && (mm.uid == fs_cxt->uid)) || ((mm.mode & S_IRGRP) && (mm.gid == fs_cxt->gid)) || (mm.mode & S_IROTH)))
 			return -1;
@@ -34,37 +35,20 @@ int fs_open (const char *path, struct fuse_file_info *fi) {
 		if(!(((mm.mode & S_IWUSR) && (mm.uid == fs_cxt->uid)) || ((mm.mode & S_IWGRP) && (mm.gid == fs_cxt->gid)) || (mm.mode & S_IWOTH)))
 			return -1;
 	}
+	fi->fh = node;
 
 	return 0;
 }
 
 int fs_create (const char *path, mode_t mode, struct fuse_file_info *fi) {
 	fi->keep_cache = 1;
-	inode node, dir_node;
-	char ppath[56];
-	int inum, cwd;
-	
-	/*
-	if((cwd = inode_trace(path, &dir_node, ppath)) == -1)
-		cwd = spb.root_directory;
-	else {
-		cwd = search_dir(&dir_node, ppath);
-		if(cwd == -1) {
-			if(fi->flags & O_CREAT)
-				return -ENOENT;
-			inum = new_inode();
-			memset(&node, -1, struct(inode));
-			update_dir(&dir_node, inum, ppath,S_IFFIL);
-			dir_node.attr.nlink++;
-			dir_node.attr.mtime = dir_node.attr.ctime = time(NULL);
-			inode_write(&dir_node, cwd);
+	inode *node = (inode *)malloc(sizeof(inode));
 
-		}
-		if(cwd != -1 && (fi->flags & O_EXCL) && (fi->flags & O_CREAT))
-			return -EEXIST;
-	}
-	inode_read(&node, cwd);
-	*/
+	memset(node, -1, struct(inode));
+	metadata_init(&node->attr, mode, 1, 0, -1);
+
+	fi->fh = node;
+
 	return 0;
 }
 
