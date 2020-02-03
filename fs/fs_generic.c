@@ -25,29 +25,34 @@ struct monitor *global_monitor;
 struct superblock spb;
 
 int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
-	inode node;
+	inode *node;
 	char ppath[56];
 	int cwd;
-	(void) fi;
-	memset(stbuf, 0, sizeof(struct stat));
-	if((cwd = inode_trace(path, &node, ppath)) == -1)
-		cwd = spb.root_directory;
-	else {
-		cwd = search_dir(&node, ppath);
-		if(cwd == -1)
-			return -ENOENT;
+	if(!fi) {
+		memset(stbuf, 0, sizeof(struct stat));
+		if((cwd = inode_trace(path, node, ppath)) == -1)
+			cwd = spb.root_directory;
+		else {
+			cwd = search_dir(node, ppath);
+			if(cwd == -1)
+				return -ENOENT;
+		}
+		inode_read(node, cwd);
+		stbuf->st_ino = cwd;
 	}
-	inode_read(&node, cwd);
-	stbuf->st_ino = cwd;
-	stbuf->st_mode = node.attr.mode;
-	stbuf->st_nlink = node.attr.nlink;
-	stbuf->st_uid = node.attr.uid;
-	stbuf->st_gid = node.attr.gid;
-	stbuf->st_size = node.attr.size;
-	stbuf->st_blksize = PAGESIZE;
-	stbuf->st_atime = node.attr.atime;
-	stbuf->st_mtime = node.attr.mtime;
-	stbuf->st_ctime = node.attr.ctime;
+	else {
+		node = (inode *)fi->fh;
+		stbuf->st_ino = node->attr.ino;
+	}
+
+	stbuf->st_mode = node->attr.mode;
+	stbuf->st_nlink = node->attr.nlink;
+	stbuf->st_uid = node->attr.uid;
+	stbuf->st_gid = node->attr.gid;
+	stbuf->st_size = node->attr.size;
+	stbuf->st_atime = node->attr.atime;
+	stbuf->st_mtime = node->attr.mtime;
+	stbuf->st_ctime = node->attr.ctime;
 
     return 0;
 }
