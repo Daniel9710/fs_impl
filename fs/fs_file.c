@@ -242,7 +242,7 @@ int fs_unlink (const char *path) {
 	char ppath[56];
 	int cwd, inum;
 	if((cwd = inode_trace(path, &dir_node, ppath)) == -1)
-		return -EINVAL;
+		cwd = spb.root_directory;
 	inum = search_dir(&dir_node, ppath);
 	inode_read(&node, inum);
 	delete_dir(&dir_node, inum);
@@ -259,7 +259,19 @@ int fs_truncate (const char *path, off_t off, struct fuse_file_info *fi) {
 }
 
 int fs_release (const char *path, struct fuse_file_info *fi) {
-
+	inode *node = (inode *)fi->fh;
+	inode node,dir_node;
+	char ppath[56];
+	int cwd, inum;
+	if((inum = node->attr.ino) == -1) {
+		if((cwd = inode_trace(path, &dir_node, ppath)) == -1)
+			cwd = spb.root_directory;
+			inum = new_inode();
+			update_dir(&dir_node, inum, ppath, node->atrr.mode & 0770000);
+			dir_node.attr.ctime = dir_node.attr.mtime = time(NULL);
+			inode_write(&dir_node, cwd);
+	}
+	inode_write(node,inum);
 	return 0;
 }
 

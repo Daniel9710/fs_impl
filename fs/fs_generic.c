@@ -41,7 +41,6 @@ int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi)
 		stbuf->st_ino = cwd;
 	}
 	else {
-		printf("\n\nDD\n\n");
 		node = *(inode *)fi->fh;
 		stbuf->st_ino = node.attr.ino;
 	}
