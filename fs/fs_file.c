@@ -286,11 +286,11 @@ int fs_release (const char *path, struct fuse_file_info *fi) {
 		update_dir(&dir_node, inum, ppath, node->attr.mode & 0770000);
 		dir_node.attr.ctime = dir_node.attr.mtime = time(NULL);
 		inode_write(&dir_node, cwd);
+		node->attr.ino = inum;
 		inode_write(node,inum);
 	}
 	else
 		inode_write(node,node->attr.ino);
-		free(node);
 	return 0;
 }
 
