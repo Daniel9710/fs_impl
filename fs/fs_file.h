@@ -5,6 +5,8 @@
 #include <fuse3/fuse.h>
 #include <fcntl.h>
 
+#define MAXFILESIZE  ((D_INDIRECTPTR * ENTRYPERPAGE + INDIRECT_PTR) * ENTRYPERPAGE + DIRECTPTR) * PAGESIZE
+
 int fs_open (const char *, struct fuse_file_info *);
 int fs_create (const char *, mode_t, struct fuse_file_info *);
 int fs_read (const char *, char *, size_t, off_t, struct fuse_file_info *);
