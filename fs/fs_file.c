@@ -134,7 +134,7 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 		if(node->direct_ptr[blknum] == -1) {
 			search_bitmap(arr, 1);
 			node->direct_ptr[blknum] = arr[0];
-			memset(&w_buf, 0, PAGESIZE);
+			memset(w_buf, 0, PAGESIZE);
 		}
 		else
 			data_read((void *)&w_buf, node->direct_ptr[blknum]);
@@ -154,7 +154,7 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 			node->indirect_ptr[j] = arr[0];
 			memset(&in_ptr, -1, PAGESIZE);
 			in_ptr.ptr[blknum] = arr[1];
-			memset(&w_buf, 0 PAGESIZE);
+			memset(w_buf, 0, PAGESIZE);
 		}
 		else
 			data_read((void *)&in_ptr, node->indirect_ptr[j]);
@@ -163,7 +163,7 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 			if(in_ptr.ptr[blknum] == -1) {
 				search_bitmap(arr, 1);
 				in_ptr.ptr[blknum] = arr[0];
-				memset(&w_buf, 0, PAGESIZE);
+				memset(w_buf, 0, PAGESIZE);
 			}
 			else
 				data_read((void *)&w_buf, in_ptr.ptr[blknum]);
@@ -189,7 +189,7 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 			d_in_ptr.ptr[j] = arr[1];
 			memset(&in_ptr, -1, PAGESIZE);
 			in_ptr.ptr[blknum] = arr[2];
-			memset(&w_buf, 0 PAGESIZE);
+			memset(w_buf, 0, PAGESIZE);
 		}
 		else
 			data_read((void *)&d_in_ptr, node->d_indirect_ptr[k]);
@@ -200,7 +200,7 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 				d_in_ptr.ptr[j] = arr[0];
 				memset(&in_ptr, -1, PAGESIZE);
 				in_ptr.ptr[blknum] = arr[1];
-				memset(&w_buf, 0 PAGESIZE);
+				memset(w_buf, 0, PAGESIZE);
 			}
 			else
 				data_read((void *)&in_ptr, d_in_ptr.ptr[j]);
@@ -209,7 +209,7 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 				if(in_ptr.ptr[blknum] != -1) {
 					search_bitmap(arr, 1);
 					in_ptr.ptr[blknum] = arr[0];
-					memset(&w_buf, 0, PAGESIZE);
+					memset(w_buf, 0, PAGESIZE);
 				}
 				else
 					data_read((void *)&w_buf, in_ptr.ptr[blknum]);
