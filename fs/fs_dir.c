@@ -198,8 +198,8 @@ int delete_dir(inode *node, int inum){
             data_read((void *)&dir, node->direct_ptr[i]);
             for(j = 0; j < DIRPERPAGE; j++) {
                 if(dir.entry[j].inode_num == inum) {
-			update_direntry(&dir, -1, "--", j, node->direct_ptr[i], 0);
-			return 0;
+					update_direntry(&dir, -1, "--", j, node->direct_ptr[i], 0);
+					return 0;
                 }
             }
         }

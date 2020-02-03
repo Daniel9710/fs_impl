@@ -238,7 +238,18 @@ int fs_flush (const char *path, struct fuse_file_info *fi) {
 }
 
 int fs_unlink (const char *path) {
-
+	inode node,dir_node;
+	char ppath[56];
+	int cwd, inum;
+	if((cwd = inode_trace(path, &dir_node, ppath)) == -1)
+		return -EINVAL;
+	inum = search_dir(&dir_node, ppath);
+	inode_read(&node, inum);
+	delete_dir(&dir_node, inum);
+	dir_node.attr.ctime = dir_node.attr.mtime = time();
+	inode_write(&dir_node, cwd);
+	remove_file(&node);
+	free_inode(inum);
 	return 0;
 }
 
