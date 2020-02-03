@@ -259,7 +259,6 @@ int fs_truncate (const char *path, off_t off, struct fuse_file_info *fi) {
 	char ppath[56];
 	int cwd;
 	if(!fi) {
-		memset(stbuf, 0, sizeof(struct stat));
 		if((cwd = inode_trace(path, &node, ppath)) == -1)
 			cwd = spb.root_directory;
 		else {
@@ -280,15 +279,17 @@ int fs_release (const char *path, struct fuse_file_info *fi) {
 	inode *node = (inode *)fi->fh, dir_node;
 	char ppath[56];
 	int cwd, inum;
-	if((inum = node->attr.ino) == -1) {
+	if(node->attr.ino == -1) {
 		if((cwd = inode_trace(path, &dir_node, ppath)) == -1)
 			cwd = spb.root_directory;
-			inum = new_inode();
-			update_dir(&dir_node, inum, ppath, node->atrr.mode & 0770000);
-			dir_node.attr.ctime = dir_node.attr.mtime = time(NULL);
-			inode_write(&dir_node, cwd);
+		inum = new_inode();
+		update_dir(&dir_node, inum, ppath, node->attr.mode & 0770000);
+		dir_node.attr.ctime = dir_node.attr.mtime = time(NULL);
+		inode_write(&dir_node, cwd);
+		indoe_write(node,inum);
 	}
-	inode_write(node,inum);
+	else
+		inode_write(node,node->attr.ino);
 	return 0;
 }
 
