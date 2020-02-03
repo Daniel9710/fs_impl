@@ -78,8 +78,8 @@ int fs_read (const char *path, char *buf, size_t size, off_t off, struct fuse_fi
 		if(node->indirect_ptr[j] != -1) {
 			data_read((void *)&in_ptr, node->indirect_ptr[j]);
 			for(blknum = (((cnt + off) / PAGESIZE) - DIRECT_PTR) % ENTRYPERPAGE; blknum < ENTRYPERPAGE; blknum++) {
-				if(in_ptr[blknum] != -1) {
-					data_read((void *)&r_buf, in_ptr[blknum]);
+				if(in_ptr.ptr[blknum] != -1) {
+					data_read((void *)&r_buf, in_ptr.ptr[blknum]);
 					end_cur = (size - cnt)>PAGESIZE?PAGESIZE:(size - cnt);
 					for(i = (off + cnt) % PAGESIZE; r_buf[i] != '\0' && i < end_cur;)
 						buf[cnt++] = r_buf[i++];
@@ -96,11 +96,11 @@ int fs_read (const char *path, char *buf, size_t size, off_t off, struct fuse_fi
 		if(node->d_indirect_ptr[k] != -1) {
 			data_read((void *)&d_in_ptr, node->d_indirect_ptr[k]);
 			for(j = ((((cnt + off) / PAGESIZE) - (DIRECT_PTR + ENTRYPERPAGE * INDIRECT_PTR)) % (ENTRYPERPAGE * ENTRYPERPAGE)) / ENTRYPERPAGE; j < INDIRECT_PTR; j++) {
-				if(d_in_ptr[j] != -1) {
-					data_read((void *)&in_ptr, d_in_ptr[j]);
+				if(d_in_ptr.ptr[j] != -1) {
+					data_read((void *)&in_ptr, d_in_ptr.ptr[j]);
 					for(blknum = ((((cnt + off) / PAGESIZE) - (DIRECT_PTR + ENTRYPERPAGE * INDIRECT_PTR)) % (ENTRYPERPAGE * ENTRYPERPAGE)) % ENTRYPERPAGE; blknum < ENTRYPERPAGE; blknum++) {
-						if(in_ptr[blknum] != -1) {
-							data_read((void *)&r_buf, in_ptr[blknum]);
+						if(in_ptr.ptr[blknum] != -1) {
+							data_read((void *)&r_buf, in_ptr.ptr[blknum]);
 							end_cur = (size - cnt)>PAGESIZE?PAGESIZE:(size - cnt);
 							for(i = (off + cnt) % PAGESIZE; r_buf[i] != '\0' && i < end_cur;)
 								buf[cnt++] = r_buf[i++];
@@ -153,24 +153,24 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 			search_bitmap(arr,2);
 			node->indirect_ptr[j] = arr[0];
 			memset(&in_ptr, -1, PAGESIZE);
-			in_ptr[blknum] = arr[1];
+			in_ptr.ptr[blknum] = arr[1];
 			memset(&w_buf, 0 PAGESIZE);
 		}
 		else
 			data_read((void *)&in_ptr, node->indirect_ptr[j]);
 
 		for(; blknum < ENTRYPERPAGE; blknum++) {
-			if(in_ptr[blknum] == -1) {
+			if(in_ptr.ptr[blknum] == -1) {
 				search_bitmap(arr, 1);
-				in_ptr[blknum] = arr[0];
+				in_ptr.ptr[blknum] = arr[0];
 				memset(&w_buf, 0, PAGESIZE);
 			}
 			else
-				data_read((void *)&w_buf, in_ptr[blknum]);
+				data_read((void *)&w_buf, in_ptr.ptr[blknum]);
 			end_cur = (size - cnt)>PAGESIZE?PAGESIZE:(size - cnt);
 			for(i = (off + cnt) % PAGESIZE; w_buf[i] != '\0' && i < end_cur;)
 				w_buf[i++] = buf[cnt++];
-			data_write((void *)&w_buf, in_ptr[blknum]);
+			data_write((void *)&w_buf, in_ptr.ptr[blknum]);
 			if(w_buf[i] == '\0' || size == cnt) {
 				data_write((void *)&in_ptr, node->indirect_ptr[j]);
 				node->attr.size += cnt;
@@ -186,46 +186,46 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 			search_bitmap(arr,3);
 			node->d_indirect_ptr[k] = arr[0];
 			memset(&d_in_ptr, -1, PAGESIZE);
-			d_in_ptr[j] = arr[1];
+			d_in_ptr.ptr[j] = arr[1];
 			memset(&in_ptr, -1, PAGESIZE);
-			in_ptr[blknum] = arr[2];
+			in_ptr.ptr[blknum] = arr[2];
 			memset(&w_buf, 0 PAGESIZE);
 		}
 		else
 			data_read((void *)&d_in_ptr, node->d_indirect_ptr[k]);
 
 		for(; j < INDIRECT_PTR; j++) {
-			if(d_in_ptr[j] != -1) {
+			if(d_in_ptr.ptr[j] != -1) {
 				search_bitmap(arr,2);
-				d_in_ptr[j] = arr[0];
+				d_in_ptr.ptr[j] = arr[0];
 				memset(&in_ptr, -1, PAGESIZE);
-				in_ptr[blknum] = arr[1];
+				in_ptr.ptr[blknum] = arr[1];
 				memset(&w_buf, 0 PAGESIZE);
 			}
 			else
-				data_read((void *)&in_ptr, d_in_ptr[j]);
+				data_read((void *)&in_ptr, d_in_ptr.ptr[j]);
 
 			for(blknum = ((((cnt + off) / PAGESIZE) - (DIRECT_PTR + ENTRYPERPAGE * INDIRECT_PTR)) % (ENTRYPERPAGE * ENTRYPERPAGE)) % ENTRYPERPAGE; blknum < ENTRYPERPAGE; blknum++) {
-				if(in_ptr[blknum] != -1) {
+				if(in_ptr.ptr[blknum] != -1) {
 					search_bitmap(arr, 1);
-					in_ptr[blknum] = arr[0];
+					in_ptr.ptr[blknum] = arr[0];
 					memset(&w_buf, 0, PAGESIZE);
 				}
 				else
-					data_read((void *)&w_buf, in_ptr[blknum]);
+					data_read((void *)&w_buf, in_ptr.ptr[blknum]);
 
 				end_cur = (size - cnt)>PAGESIZE?PAGESIZE:(size - cnt);
 				for(i = (off + cnt) % PAGESIZE; w_buf[i] != '\0' && i < end_cur;)
 					w_buf[i++] = buf[cnt++];
-				data_write((void *)&w_buf, in_ptr[blk_num]);
+				data_write((void *)&w_buf, in_ptr.ptr[blk_num]);
 				if(w_buf[i] == '\0' || size == cnt) {
 					data_write((void *)&d_in_ptr, node->d_indirect_ptr[k]);
-					data_write((void *)&in_ptr, d_in_ptr[j]);
+					data_write((void *)&in_ptr, d_in_ptr.ptr[j]);
 					node->attr.size += cnt;
 					return cnt;
 				}
 			}
-			data_write((void *)&in_ptr, d_in_ptr[j]);
+			data_write((void *)&in_ptr, d_in_ptr.ptr[j]);
 		}
 		data_write((void *)&d_in_ptr, node->d_indirect_ptr[k]);
 	}
