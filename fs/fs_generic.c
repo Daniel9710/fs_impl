@@ -32,11 +32,9 @@ int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi)
 		memset(stbuf, 0, sizeof(struct stat));
 		if((cwd = inode_trace(path, &node, ppath)) == -1)
 			cwd = spb.root_directory;
-		else {
-			cwd = search_dir(&node, ppath);
-			if(cwd == -1)
-				return -ENOENT;
-		}
+		else if((cwd = search_dir(&node, ppath)) == -1)
+			return -ENOENT;
+
 		inode_read(&node, cwd);
 		stbuf->st_ino = cwd;
 	}
@@ -50,7 +48,6 @@ int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi)
 	stbuf->st_uid = node.attr.uid;
 	stbuf->st_gid = node.attr.gid;
 	stbuf->st_size = node.attr.size;
-	stbuf->st_blksize = PAGESIZE;
 	stbuf->st_atime = node.attr.atime;
 	stbuf->st_mtime = node.attr.mtime;
 	stbuf->st_ctime = node.attr.ctime;
@@ -65,11 +62,9 @@ int fs_utimens (const char *path, const struct timespec ts[2], struct fuse_file_
 	if(!fi) {
 		if((cwd = inode_trace(path, &node, ppath)) == -1)
 			cwd = spb.root_directory;
-		else {
+		else
 			cwd = search_dir(&node, ppath);
-			if(cwd == -1)
-				return -ENOENT;
-		}
+
 		inode_read(&node, cwd);
 		node.attr.atime = ts[0].tv_sec;
 		node.attr.mtime = ts[1].tv_sec;
@@ -89,9 +84,9 @@ int fs_chmod (const char *path, mode_t mode, struct fuse_file_info *fi) {
 	(void) fi;
 	if((cwd = inode_trace(path, &node, ppath)) == -1)
 		cwd = spb.root_directory;
-	else {
+	else
 		cwd = search_dir(&node, ppath);
-	}
+
 	inode_read(&node, cwd);
 	node.attr.mode = mode;
 	node.attr.atime = node.attr.ctime = time(NULL);
@@ -187,15 +182,15 @@ int fs_access (const char *path, int mask) {
 	mm = node.attr;
 
 	switch(mask){
-		case: F_OK
+		case F_OK:
 			return 0;
-		case: R_OK
+		case R_OK:
 			bit = 4;
 			break;
-		case: W_OK
+		case W_OK:
 			bit = 2;
 			break;
-		case: X_OK
+		case X_OK:
 			bit = 1;
 			break;
 		default:
