@@ -130,6 +130,7 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 	inode *node = (inode *)fi->fh;
 	char w_buf[PAGESIZE];
 
+
 	for(blknum = off / PAGESIZE; blknum < DIRECT_PTR; blknum++) {
 		if(node->direct_ptr[blknum] == -1) {
 			search_bitmap(arr, 1);
@@ -149,7 +150,7 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 	}
 	for(j = (((cnt + off) / PAGESIZE) - DIRECT_PTR) / ENTRYPERPAGE; j < INDIRECT_PTR; j++) {
 		blknum = (((cnt + off) / PAGESIZE) - DIRECT_PTR) % ENTRYPERPAGE;
-		if(node->indirect_ptr[j] != -1) {
+		if(node->indirect_ptr[j] == -1) {
 			search_bitmap(arr,2);
 			node->indirect_ptr[j] = arr[0];
 			memset(&in_ptr, -1, PAGESIZE);
@@ -195,7 +196,7 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 			data_read((void *)&d_in_ptr, node->d_indirect_ptr[k]);
 
 		for(; j < INDIRECT_PTR; j++) {
-			if(d_in_ptr.ptr[j] != -1) {
+			if(d_in_ptr.ptr[j] == -1) {
 				search_bitmap(arr,2);
 				d_in_ptr.ptr[j] = arr[0];
 				memset(&in_ptr, -1, PAGESIZE);
@@ -206,7 +207,7 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 				data_read((void *)&in_ptr, d_in_ptr.ptr[j]);
 
 			for(blknum = ((((cnt + off) / PAGESIZE) - (DIRECT_PTR + ENTRYPERPAGE * INDIRECT_PTR)) % (ENTRYPERPAGE * ENTRYPERPAGE)) % ENTRYPERPAGE; blknum < ENTRYPERPAGE; blknum++) {
-				if(in_ptr.ptr[blknum] != -1) {
+				if(in_ptr.ptr[blknum] == -1) {
 					search_bitmap(arr, 1);
 					in_ptr.ptr[blknum] = arr[0];
 					memset(w_buf, 0, PAGESIZE);
@@ -254,7 +255,24 @@ int fs_unlink (const char *path) {
 }
 
 int fs_truncate (const char *path, off_t off, struct fuse_file_info *fi) {
-
+	inode node;
+	char ppath[56];
+	int cwd;
+	if(!fi) {
+		memset(stbuf, 0, sizeof(struct stat));
+		if((cwd = inode_trace(path, &node, ppath)) == -1)
+			cwd = spb.root_directory;
+		else {
+			cwd = search_dir(&node, ppath);
+			if(cwd == -1)
+				return -ENOENT;
+		}
+		inode_read(&node, cwd);
+	}
+	else {
+		node = *(inode *)fi->fh;
+	}
+	node.attr.size = off;
 	return 0;
 }
 
