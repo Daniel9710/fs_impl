@@ -59,7 +59,26 @@ int fs_getattr (const char *path, struct stat *stbuf, struct fuse_file_info *fi)
 }
 
 int fs_utimens (const char *path, const struct timespec ts[2], struct fuse_file_info *fi) {
-
+	inode node;
+	char ppath[56];
+	int cwd;
+	if(!fi) {
+		if((cwd = inode_trace(path, &node, ppath)) == -1)
+			cwd = spb.root_directory;
+		else {
+			cwd = search_dir(&node, ppath);
+			if(cwd == -1)
+				return -ENOENT;
+		}
+		inode_read(&node, cwd);
+		node.attr.atime = ts[0].tv_sec;
+		node.attr.mtime = ts[1].tv_sec;
+		inode_write(&node,cwd);
+	}
+	else {
+		((inode *)fi->fh)->attr.atime = ts[0].tv_sec;
+		((inode *)fi->fh)->attr.mtime = ts[1].tv_sec;
+	}
 	return 0;
 }
 
