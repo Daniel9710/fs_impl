@@ -246,7 +246,7 @@ int fs_unlink (const char *path) {
 	inum = search_dir(&dir_node, ppath);
 	inode_read(&node, inum);
 	delete_dir(&dir_node, inum);
-	dir_node.attr.ctime = dir_node.attr.mtime = time();
+	dir_node.attr.ctime = dir_node.attr.mtime = time(NULL);
 	inode_write(&dir_node, cwd);
 	remove_file(&node);
 	free_inode(inum);
