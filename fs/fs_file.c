@@ -242,8 +242,8 @@ int fs_unlink (const char *path) {
 	inode node,dir_node;
 	char ppath[56];
 	int cwd, inum;
-	if((cwd = inode_trace(path, &dir_node, ppath)) == -1)
-		cwd = spb.root_directory;
+	if((cwd = inode_trace(path, &dir_node, ppath)) < 0)
+		return -ENOENT;
 	inum = search_dir(&dir_node, ppath);
 	inode_read(&node, inum);
 	delete_dir(&dir_node, inum);
@@ -259,13 +259,10 @@ int fs_truncate (const char *path, off_t off, struct fuse_file_info *fi) {
 	char ppath[56];
 	int cwd;
 	if(!fi) {
-		if((cwd = inode_trace(path, &node, ppath)) == -1)
-			cwd = spb.root_directory;
-		else {
-			cwd = search_dir(&node, ppath);
-			if(cwd == -1)
-				return -ENOENT;
-		}
+		if((cwd = inode_trace(path, &node, ppath)) < 0)
+			return -ENOENT;
+		cwd = search_dir(&node, ppath);
+
 		inode_read(&node, cwd);
 	}
 	else {
@@ -280,8 +277,8 @@ int fs_release (const char *path, struct fuse_file_info *fi) {
 	char ppath[56];
 	int cwd, inum;
 	if(node->attr.ino == -1) {
-		if((cwd = inode_trace(path, &dir_node, ppath)) == -1)
-			cwd = spb.root_directory;
+		if((cwd = inode_trace(path, &dir_node, ppath)) < 0)
+			return -ENOENT;
 		inum = new_inode();
 		update_dir(&dir_node, inum, ppath, node->attr.mode & 0770000);
 		dir_node.attr.ctime = dir_node.attr.mtime = time(NULL);

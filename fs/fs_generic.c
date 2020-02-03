@@ -87,12 +87,10 @@ int fs_chmod (const char *path, mode_t mode, struct fuse_file_info *fi) {
 	char ppath[56];
 	int cwd = inode_trace(path, &node, ppath);
 	(void) fi;
-	if(cwd == -1)
+	if((cwd = inode_trace(path, &node, ppath)) == -1)
 		cwd = spb.root_directory;
 	else {
 		cwd = search_dir(&node, ppath);
-		if(cwd == -1)
-			return -ENOENT;
 	}
 	inode_read(&node, cwd);
 	node.attr.mode = mode;
@@ -104,15 +102,13 @@ int fs_chmod (const char *path, mode_t mode, struct fuse_file_info *fi) {
 int fs_chown (const char *path, uid_t uid, gid_t gid, struct fuse_file_info *fi) {
 	inode node;
 	char ppath[56];
-	int cwd = inode_trace(path, &node, ppath);
+	int cwd;
 	(void) fi;
-	if(cwd == -1)
+	if((cwd = inode_trace(path, &node, ppath)) == -1)
 		cwd = spb.root_directory;
-	else {
+	else
 		cwd = search_dir(&node, ppath);
-		if(cwd == -1)
-			return -ENOENT;
-	}
+
 	inode_read(&node, cwd);
 	node.attr.uid = uid;
 	node.attr.gid = gid;
@@ -179,49 +175,40 @@ int fs_rename (const char *oldpath, const char *newpath, unsigned int flags) {
 int fs_access (const char *path, int mask) {
 	inode node;
 	char ppath[56];
-	int cwd = inode_trace(path, &node, ppath);
+	int cwd, bit;
 	struct metadata mm;
 	struct fuse_context *fs_cxt = fuse_get_context();
-	if(cwd == -1)
+
+	if((cwd = inode_trace(path, &node, ppath)) == -1)
 		cwd = spb.root_directory;
-	else {
+	else
 		cwd = search_dir(&node, ppath);
-	}
 	inode_read(&node, cwd);
 	mm = node.attr;
-	if(mask == F_OK)
+
+	switch(mask){
+		case: F_OK
+			return 0;
+		case: R_OK
+			bit = 4;
+			break;
+		case: W_OK
+			bit = 2;
+			break;
+		case: X_OK
+			bit = 1;
+			break;
+		default:
+			return -1;
+	}
+	if((mm.mode & (bit << 6)) && (mm.uid == fs_cxt->uid))
 		return 0;
-	else if (mask == R_OK) {
-		if((mm.mode & S_IRUSR) && (mm.uid == fs_cxt->uid))
-			return 0;
-		else if((mm.mode & S_IRGRP) && (mm.gid == fs_cxt->gid))
-			return 0;
-		else if(mm.mode & S_IROTH)
-			return 0;
-		else
-			return -1;
-	}
-	else if (mask == W_OK) {
-		if((mm.mode & S_IWUSR) && (mm.uid == fs_cxt->uid))
-			return 0;
-		else if((mm.mode & S_IWGRP) && (mm.gid == fs_cxt->gid))
-			return 0;
-		else if(mm.mode & S_IWOTH)
-			return 0;
-		else
-			return -1;
-	}
-	else if (mask == X_OK) {
-		if((mm.mode & S_IXUSR) && (mm.uid == fs_cxt->uid))
-			return 0;
-		else if((mm.mode & S_IXGRP) && (mm.gid == fs_cxt->gid))
-			return 0;
-		else if(mm.mode & S_IXOTH)
-			return 0;
-		else
-			return -1;
-	}
-	return 0;
+	else if((mm.mode & (bit << 3)) && (mm.gid == fs_cxt->gid))
+		return 0;
+	else if(mm.mode & bit)
+		return 0;
+
+	return -1;
 }
 
 int fs_symlink (const char *from, const char *to) {
