@@ -217,7 +217,7 @@ int fs_write (const char *path, const char *buf, size_t size, off_t off, struct 
 				end_cur = (size - cnt)>PAGESIZE?PAGESIZE:(size - cnt);
 				for(i = (off + cnt) % PAGESIZE; w_buf[i] != '\0' && i < end_cur;)
 					w_buf[i++] = buf[cnt++];
-				data_write((void *)&w_buf, in_ptr.ptr[blk_num]);
+				data_write((void *)&w_buf, in_ptr.ptr[blknum]);
 				if(w_buf[i] == '\0' || size == cnt) {
 					data_write((void *)&d_in_ptr, node->d_indirect_ptr[k]);
 					data_write((void *)&in_ptr, d_in_ptr.ptr[j]);
