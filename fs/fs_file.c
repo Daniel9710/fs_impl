@@ -55,7 +55,7 @@ int fs_create (const char *path, mode_t mode, struct fuse_file_info *fi) {
 
 int fs_read (const char *path, char *buf, size_t size, off_t off, struct fuse_file_info *fi) {
 	off_t blknum;
-	uint64_t end_cur, end_blk;
+	uint64_t end_cur;
 	size_t cnt = 0;
 	int i, j, k;
 	indirect_ptr in_ptr, d_in_ptr;
